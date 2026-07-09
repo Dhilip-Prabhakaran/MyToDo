@@ -1,0 +1,17 @@
+# Render deployment (https://render.com) — one free web service that serves
+# both the API and the built React frontend.
+#
+# After first deploy, set the MONGODB_URI env var in the Render dashboard to
+# your MongoDB Atlas connection string (kept out of the repo via sync: false).
+services:
+  - type: web
+    name: mytodo
+    runtime: node
+    plan: free
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: mytodo
