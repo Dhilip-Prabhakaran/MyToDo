@@ -179,3 +179,32 @@ export function habitStreak(habit, habitLogs) {
   }
   return count;
 }
+
+// Last n rolling 7-day windows (oldest first) with a hit count vs. that
+// habit's target — feeds the per-habit bar chart on the Habits page.
+export function habitLastNWeeks(habit, habitLogs, n = 8) {
+  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
+  const target = habit.frequency === "weekly" ? habit.timesPerWeek : 7;
+  const weeks = [];
+  let end = todayStr();
+  for (let i = 0; i < n; i++) {
+    const start = addDays(end, -6);
+    let hits = 0;
+    for (let d = start; d <= end; d = addDays(d, 1)) if (done.has(d)) hits++;
+    weeks.unshift({ start, end, hits, target, pct: Math.min(Math.round((hits / target) * 100), 100) });
+    end = addDays(start, -1);
+  }
+  return weeks;
+}
+
+// Completion count over the last n days — feeds the 30-day heatmap strip.
+export function habitLastNDays(habit, habitLogs, n = 30) {
+  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
+  const today = todayStr();
+  const days = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const date = addDays(today, -i);
+    days.push({ date, done: done.has(date) });
+  }
+  return days;
+}

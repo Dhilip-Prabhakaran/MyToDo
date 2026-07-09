@@ -4,11 +4,13 @@ import { todayStr } from "./insights.js";
 import Home from "./components/Home.jsx";
 import TargetsPage from "./components/TargetsPage.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
+import HabitsPage from "./components/HabitsPage.jsx";
 import Templates from "./components/Templates.jsx";
 
 const TABS = [
   { id: "home", label: "Home" },
   { id: "targets", label: "Targets" },
+  { id: "habits", label: "Habits" },
   { id: "history", label: "History" },
   { id: "templates", label: "Templates" },
 ];
@@ -89,6 +91,7 @@ export default function App() {
         {!data && !error && <div className="loading">Loading your goals…</div>}
         {data && tab === "home" && <Home data={data} refresh={refresh} />}
         {data && tab === "targets" && <TargetsPage data={data} refresh={refresh} />}
+        {data && tab === "habits" && <HabitsPage data={data} refresh={refresh} />}
         {data && tab === "history" && <HistoryPage data={data} refresh={refresh} />}
         {data && tab === "templates" && <Templates data={data} refresh={refresh} />}
       </main>

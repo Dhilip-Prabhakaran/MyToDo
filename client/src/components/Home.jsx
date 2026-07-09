@@ -14,7 +14,7 @@ import {
 import ProgressRing from "./ProgressRing.jsx";
 import Calendar from "./Calendar.jsx";
 import TaskEditModal from "./TaskEditModal.jsx";
-import Habits from "./Habits.jsx";
+import HabitQuickList from "./HabitQuickList.jsx";
 
 // A pinned "today's focus" task is the one thing that matters most that day —
 // capped low on purpose, otherwise everything ends up pinned and nothing does.
@@ -246,8 +246,6 @@ export default function Home({ data, refresh }) {
           </section>
         )}
 
-        <Habits data={data} refresh={refresh} />
-
         {Object.values(groups).map(({ target, milestoneTasks }) => (
           <section
             key={target ? target.id : "other"}
@@ -313,6 +311,8 @@ export default function Home({ data, refresh }) {
           </div>
         </section>
 
+        <HabitQuickList data={data} refresh={refresh} />
+
         <section className="card">
           <div className="card-head">
             <h3>Last 14 days</h3>
@@ -341,23 +341,26 @@ export default function Home({ data, refresh }) {
 
         <section className="card">
           <div className="card-head">
-            <h3>Target completion</h3>
+            <h3>Targets</h3>
           </div>
-          <div className="ring-row">
-            {data.targets.map((t) => {
-              const tStats = targetStats(t, data.milestones, data.subtasks);
-              return (
-                <div key={t.id} className="ring-item">
-                  <ProgressRing value={tStats.completion} color={t.color} size={100} />
-                  <span className="ring-caption">{t.title}</span>
-                  <span className="ring-sub">
-                    {tStats.daysLeft >= 0 ? `${tStats.daysLeft}d left` : "past due"}
-                  </span>
-                </div>
-              );
-            })}
-            {data.targets.length === 0 && <p className="hint">No targets yet.</p>}
-          </div>
+          {data.targets.length === 0 ? (
+            <p className="hint">No targets yet.</p>
+          ) : (
+            <ul className="pace-list">
+              {data.targets
+                .map((t) => ({ target: t, stats: targetStats(t, data.milestones, data.subtasks) }))
+                .sort((a, b) => a.stats.daysLeft - b.stats.daysLeft)
+                .map(({ target, stats: tStats }) => (
+                  <li key={target.id}>
+                    <span className="cal-dot" style={{ background: target.color }} />
+                    <span className="pace-title">{target.title}</span>
+                    <span className="habit-streak" style={{ color: target.color }}>
+                      {tStats.daysLeft >= 0 ? `${tStats.daysLeft}d left` : "past due"}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          )}
         </section>
       </div>
 
