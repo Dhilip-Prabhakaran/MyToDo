@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api.js";
+import { todayStr } from "./insights.js";
 import Home from "./components/Home.jsx";
 import TargetsPage from "./components/TargetsPage.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
@@ -30,6 +31,17 @@ export default function App() {
     refresh();
   }, [refresh]);
 
+  const exportData = () => {
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mytodo-backup-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="shell">
       <header className="topbar">
@@ -44,17 +56,27 @@ export default function App() {
               <span className="wm-6">o</span>
             </h1>
           </div>
-          <nav className="tabs">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                className={`tab ${tab === t.id ? "active" : ""}`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </nav>
+          <div className="topbar-right">
+            <nav className="tabs">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`tab ${tab === t.id ? "active" : ""}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+            <button
+              className="btn-icon"
+              title="Download all your data as a JSON backup"
+              onClick={exportData}
+              disabled={!data}
+            >
+              ⬇ Export
+            </button>
+          </div>
         </div>
       </header>
 

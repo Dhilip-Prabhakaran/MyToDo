@@ -115,3 +115,67 @@ export function streak(subtasks) {
   }
   return count;
 }
+
+// ---------- habits (recurring, no end date — tracked separately from Targets) ----------
+
+export function isHabitDoneOn(habit, habitLogs, dateStr) {
+  return habitLogs.some((l) => l.habitId === habit.id && l.date === dateStr && l.done);
+}
+
+// Completions within the rolling 7 days ending today — used for "N/week" habits.
+export function habitWeekProgress(habit, habitLogs) {
+  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
+  const end = todayStr();
+  const start = addDays(end, -6);
+  let hits = 0;
+  for (let d = start; d <= end; d = addDays(d, 1)) if (done.has(d)) hits++;
+  return { hits, target: habit.timesPerWeek };
+}
+
+// Daily habits: consecutive days done, with ONE grace skip allowed — it recharges
+// after 7 done-days since it was last used, so a single off day doesn't erase months
+// of momentum (an all-or-nothing streak is discouraging on a long plan).
+// Weekly habits ("N times a week"): consecutive rolling-7-day windows that hit the
+// target count; the current, still-in-progress window never breaks the streak.
+export function habitStreak(habit, habitLogs) {
+  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
+
+  if (habit.frequency === "weekly") {
+    let count = 0;
+    let weekEnd = todayStr();
+    let isCurrentWindow = true;
+    for (;;) {
+      const weekStart = addDays(weekEnd, -6);
+      let hits = 0;
+      for (let d = weekStart; d <= weekEnd; d = addDays(d, 1)) if (done.has(d)) hits++;
+      if (hits >= habit.timesPerWeek) count++;
+      else if (!isCurrentWindow) break;
+      isCurrentWindow = false;
+      weekEnd = addDays(weekStart, -1);
+    }
+    return count;
+  }
+
+  let count = 0;
+  let date = todayStr();
+  if (!done.has(date)) date = addDays(date, -1);
+  let daysSinceGrace = 0;
+  let graceUsed = false;
+  for (;;) {
+    if (done.has(date)) {
+      count++;
+      daysSinceGrace++;
+      if (daysSinceGrace >= 7) {
+        graceUsed = false;
+        daysSinceGrace = 0;
+      }
+    } else if (!graceUsed) {
+      graceUsed = true;
+      daysSinceGrace = 0;
+    } else {
+      break;
+    }
+    date = addDays(date, -1);
+  }
+  return count;
+}

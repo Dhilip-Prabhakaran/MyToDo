@@ -27,4 +27,9 @@ export const api = {
   addSubtask: (milestoneId, data) => req("POST", `/api/milestones/${milestoneId}/subtasks`, data),
   updateSubtask: (id, data) => req("PUT", `/api/subtasks/${id}`, data),
   deleteSubtask: (id) => req("DELETE", `/api/subtasks/${id}`),
+
+  addHabit: (data) => req("POST", "/api/habits", data),
+  updateHabit: (id, data) => req("PUT", `/api/habits/${id}`, data),
+  deleteHabit: (id) => req("DELETE", `/api/habits/${id}`),
+  logHabit: (id, date, done) => req("PUT", `/api/habits/${id}/log`, { date, done }),
 };

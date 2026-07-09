@@ -172,10 +172,11 @@ app.post("/api/milestones/:milestoneId/subtasks", (req, res) => {
 app.put("/api/subtasks/:id", (req, res) => {
   const subtask = state.subtasks.find((s) => s.id === req.params.id);
   if (!subtask) return res.status(404).json({ error: "subtask not found" });
-  const { title, date, endDate, done } = req.body;
+  const { title, date, endDate, done, priority } = req.body;
   if (title !== undefined) subtask.title = title;
   if (date !== undefined) subtask.date = date;
   if (endDate !== undefined) subtask.endDate = endDate || null;
+  if (priority !== undefined) subtask.priority = !!priority;
   if (done !== undefined) {
     subtask.done = !!done;
     subtask.doneAt = subtask.done ? now() : null;
@@ -186,6 +187,64 @@ app.put("/api/subtasks/:id", (req, res) => {
 
 app.delete("/api/subtasks/:id", (req, res) => {
   state.subtasks = state.subtasks.filter((s) => s.id !== req.params.id);
+  persist();
+  res.json({ ok: true });
+});
+
+// ---------- habits (recurring, no end date — separate from Targets) ----------
+app.post("/api/habits", (req, res) => {
+  const { title, frequency = "daily", timesPerWeek = 7, color = "#0078D4" } = req.body;
+  if (!title) return res.status(400).json({ error: "title is required" });
+  const habit = {
+    id: id(),
+    title,
+    frequency, // "daily" | "weekly"
+    timesPerWeek:
+      frequency === "weekly" ? Math.min(Math.max(parseInt(timesPerWeek, 10) || 1, 1), 6) : 7,
+    color,
+    createdAt: now(),
+  };
+  state.habits.push(habit);
+  persist();
+  res.status(201).json(habit);
+});
+
+app.put("/api/habits/:id", (req, res) => {
+  const habit = state.habits.find((h) => h.id === req.params.id);
+  if (!habit) return res.status(404).json({ error: "habit not found" });
+  const { title, frequency, timesPerWeek, color } = req.body;
+  Object.assign(habit, {
+    ...(title !== undefined && { title }),
+    ...(frequency !== undefined && { frequency }),
+    ...(timesPerWeek !== undefined && {
+      timesPerWeek: Math.min(Math.max(parseInt(timesPerWeek, 10) || 1, 1), 6),
+    }),
+    ...(color !== undefined && { color }),
+  });
+  persist();
+  res.json(habit);
+});
+
+app.delete("/api/habits/:id", (req, res) => {
+  state.habits = state.habits.filter((h) => h.id !== req.params.id);
+  state.habitLogs = state.habitLogs.filter((l) => l.habitId !== req.params.id);
+  persist();
+  res.json({ ok: true });
+});
+
+// Upsert a habit's completion log for one date — the checkbox on Home ticks this.
+app.put("/api/habits/:id/log", (req, res) => {
+  const habit = state.habits.find((h) => h.id === req.params.id);
+  if (!habit) return res.status(404).json({ error: "habit not found" });
+  const { date, done } = req.body;
+  if (!date) return res.status(400).json({ error: "date is required" });
+  const existing = state.habitLogs.find((l) => l.habitId === habit.id && l.date === date);
+  if (done) {
+    if (existing) existing.doneAt = now();
+    else state.habitLogs.push({ id: id(), habitId: habit.id, date, done: true, doneAt: now() });
+  } else if (existing) {
+    state.habitLogs = state.habitLogs.filter((l) => l.id !== existing.id);
+  }
   persist();
   res.json({ ok: true });
 });

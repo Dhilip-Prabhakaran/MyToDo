@@ -8,11 +8,17 @@ import {
   addDays,
   lastNDays,
   targetStats,
+  milestoneStats,
   taskDateLabel,
 } from "../insights.js";
 import ProgressRing from "./ProgressRing.jsx";
 import Calendar from "./Calendar.jsx";
 import TaskEditModal from "./TaskEditModal.jsx";
+import Habits from "./Habits.jsx";
+
+// A pinned "today's focus" task is the one thing that matters most that day —
+// capped low on purpose, otherwise everything ends up pinned and nothing does.
+const FOCUS_LIMIT = 3;
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTHS = [
@@ -20,15 +26,38 @@ const MONTHS = [
   "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
 ];
 
+// Six full palettes (top strip, card body, text) built around the MyToDo
+// wordmark colors — a light tint of each hue behind matching dark text, so
+// the whole card reads as one coherent combination. Cycled one-per-day.
+const DAY_PALETTES = [
+  { top: "#0078D4", bg: "#DBEAFE", text: "#1E3A8A", border: "#93C5FD" }, // blue
+  { top: "#E81B23", bg: "#FEE2E2", text: "#7F1D1D", border: "#FCA5A5" }, // red
+  { top: "#107C10", bg: "#DCFCE7", text: "#14532D", border: "#86EFAC" }, // green
+  { top: "#D97706", bg: "#FEF3C7", text: "#78350F", border: "#FCD34D" }, // amber
+  { top: "#7D3C98", bg: "#F3E8FF", text: "#581C87", border: "#D8B4FE" }, // purple
+  { top: "#00A4EF", bg: "#CFFAFE", text: "#164E63", border: "#67E8F9" }, // cyan
+];
+
 // Tear-off desk-calendar sheet that flips in when the date changes.
 function DateSheet({ dateStr }) {
   const d = new Date(dateStr + "T00:00:00");
+  const palette = DAY_PALETTES[Math.floor(d.getTime() / 86400000) % DAY_PALETTES.length];
   return (
-    <div className="date-sheet" key={dateStr}>
-      <div className="date-sheet-top">{WEEKDAYS[d.getDay()]}</div>
+    <div
+      className="date-sheet"
+      key={dateStr}
+      style={{ background: palette.bg, borderColor: palette.border }}
+    >
+      <div className="date-sheet-top" style={{ background: palette.top }}>
+        {WEEKDAYS[d.getDay()]}
+      </div>
       <div className="date-sheet-body">
-        <span className="date-sheet-day">{d.getDate()}</span>
-        <span className="date-sheet-month">{MONTHS[d.getMonth()]}</span>
+        <span className="date-sheet-day" style={{ color: palette.text }}>
+          {d.getDate()}
+        </span>
+        <span className="date-sheet-month" style={{ color: palette.text }}>
+          {MONTHS[d.getMonth()]}
+        </span>
       </div>
       <span className="date-sheet-ring date-sheet-ring-l" />
       <span className="date-sheet-ring date-sheet-ring-r" />
@@ -96,8 +125,30 @@ export default function Home({ data, refresh }) {
     groups[key].milestoneTasks.push({ task, milestone });
   }
 
+  // Milestones that are behind pace or overdue — surfaced here so it doesn't
+  // take a trip to the Targets page to notice a plan slipping.
+  const paceAlerts = data.milestones
+    .map((m) => ({ milestone: m, target: targetById[m.targetId], stats: milestoneStats(m, data.subtasks) }))
+    .filter(({ stats: s }) => s.status === "behind" || s.status === "overdue")
+    .sort((a, b) => a.stats.daysLeft - b.stats.daysLeft);
+
+  // Pinned "today's focus" tasks (starred), shown at the top regardless of target.
+  const focusTasks = stats.tasks
+    .filter((t) => t.priority)
+    .sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1));
+  const pinnedOpenCount = stats.tasks.filter((t) => t.priority && !t.done).length;
+
   const toggle = async (task) => {
     await api.updateSubtask(task.id, { done: !task.done });
+    refresh();
+  };
+
+  const togglePriority = async (task) => {
+    if (!task.priority && pinnedOpenCount >= FOCUS_LIMIT) {
+      alert(`You can only pin up to ${FOCUS_LIMIT} tasks as today's focus at a time.`);
+      return;
+    }
+    await api.updateSubtask(task.id, { priority: !task.priority });
     refresh();
   };
 
@@ -146,6 +197,57 @@ export default function Home({ data, refresh }) {
           </div>
         </section>
 
+        {paceAlerts.length > 0 && (
+          <section className="card pace-alert">
+            <div className="card-head">
+              <h3>⚠ Needs attention</h3>
+            </div>
+            <ul className="pace-list">
+              {paceAlerts.map(({ milestone, target, stats: mStats }) => (
+                <li key={milestone.id}>
+                  <span className="cal-dot" style={{ background: target?.color || "#9b968a" }} />
+                  <span className="pace-title">{milestone.title}</span>
+                  <span className="task-milestone">{target?.title || "—"}</span>
+                  <span className={`chip ${mStats.status === "overdue" ? "chip-red" : "chip-gold"}`}>
+                    {mStats.status === "overdue" ? `${Math.abs(mStats.daysLeft)}d overdue` : "Behind pace"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {focusTasks.length > 0 && (
+          <section className="card focus-card">
+            <div className="card-head">
+              <h3>⭐ Today's focus</h3>
+            </div>
+            <ul className="task-list">
+              {focusTasks.map((task) => {
+                const milestone = milestoneById[task.milestoneId];
+                return (
+                  <li key={task.id} className={task.done ? "done" : ""}>
+                    <label>
+                      <input type="checkbox" checked={task.done} onChange={() => toggle(task)} />
+                      <span className="task-title">{task.title}</span>
+                    </label>
+                    {milestone && <span className="task-milestone">{milestone.title}</span>}
+                    <button
+                      className="btn-icon star-btn active"
+                      title="Unpin from today's focus"
+                      onClick={() => togglePriority(task)}
+                    >
+                      ★
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <Habits data={data} refresh={refresh} />
+
         {Object.values(groups).map(({ target, milestoneTasks }) => (
           <section
             key={target ? target.id : "other"}
@@ -162,6 +264,13 @@ export default function Home({ data, refresh }) {
                   </label>
                   {task.endDate && <span className="task-date">{taskDateLabel(task)}</span>}
                   {milestone && <span className="task-milestone">{milestone.title}</span>}
+                  <button
+                    className={`btn-icon star-btn ${task.priority ? "active" : ""}`}
+                    title={task.priority ? "Unpin from today's focus" : "Pin as today's focus"}
+                    onClick={() => togglePriority(task)}
+                  >
+                    ★
+                  </button>
                   <button
                     className="btn-icon"
                     title="Edit task"
