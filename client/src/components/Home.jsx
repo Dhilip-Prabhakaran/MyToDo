@@ -11,8 +11,8 @@ import {
   taskDateLabel,
 } from "../insights.js";
 import ProgressRing from "./ProgressRing.jsx";
-import PlannedTable from "./PlannedTable.jsx";
 import Calendar from "./Calendar.jsx";
+import TaskEditModal from "./TaskEditModal.jsx";
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTHS = [
@@ -57,12 +57,7 @@ function PlanModal({ data, refresh, onClose }) {
     >
       <div className="modal" role="dialog" aria-label="Plan tasks">
         <div className="modal-head">
-          <div>
-            <h3>Plan tasks</h3>
-            <p className="card-sub">
-              Click a day or drag across days, then add a task to the selection.
-            </p>
-          </div>
+          <h3>Plan tasks</h3>
           <button className="btn-icon" onClick={onClose} title="Close">
             ✕
           </button>
@@ -75,6 +70,7 @@ function PlanModal({ data, refresh, onClose }) {
 
 export default function Home({ data, refresh }) {
   const [planOpen, setPlanOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const today = todayStr();
   const stats = dayStats(data.subtasks, today);
   const currentStreak = streak(data.subtasks);
@@ -166,6 +162,13 @@ export default function Home({ data, refresh }) {
                   </label>
                   {task.endDate && <span className="task-date">{taskDateLabel(task)}</span>}
                   {milestone && <span className="task-milestone">{milestone.title}</span>}
+                  <button
+                    className="btn-icon"
+                    title="Edit task"
+                    onClick={() => setEditingTask(task)}
+                  >
+                    Edit
+                  </button>
                 </li>
               ))}
             </ul>
@@ -182,8 +185,6 @@ export default function Home({ data, refresh }) {
             </p>
           </section>
         )}
-
-        <PlannedTable data={data} refresh={refresh} />
       </div>
 
       {/* ---------- right: insights ---------- */}
@@ -252,6 +253,9 @@ export default function Home({ data, refresh }) {
       </div>
 
       {planOpen && <PlanModal data={data} refresh={refresh} onClose={() => setPlanOpen(false)} />}
+      {editingTask && (
+        <TaskEditModal task={editingTask} onClose={() => setEditingTask(null)} refresh={refresh} />
+      )}
     </div>
   );
 }

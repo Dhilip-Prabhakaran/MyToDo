@@ -8,6 +8,7 @@ import {
   fmtDate,
   taskDateLabel,
 } from "../insights.js";
+import TaskEditModal from "./TaskEditModal.jsx";
 
 // Warm, Claude-adjacent palette for target accents.
 const COLORS = [
@@ -29,36 +30,9 @@ const STATUS_LABELS = {
   empty: { text: "No tasks yet", cls: "chip-grey" },
 };
 
-function TargetForm({ onSaved }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    color: COLORS[6],
-    startDate: todayStr(),
-    targetDate: "",
-  });
-
-  const submit = async (e) => {
-    e.preventDefault();
-    await api.addTarget(form);
-    setForm({ ...form, title: "", description: "", targetDate: "" });
-    setOpen(false);
-    onSaved();
-  };
-
-  if (!open) {
-    return (
-      <div className="targets-toolbar">
-        <button className="btn btn-small" onClick={() => setOpen(true)}>
-          ＋ New Target
-        </button>
-      </div>
-    );
-  }
+function TargetFields({ form, setForm }) {
   return (
-    <form className="card form-card" onSubmit={submit}>
-      <h3>New target</h3>
+    <>
       <input
         placeholder="Big goal, e.g. Master Gen AI"
         value={form.title}
@@ -103,6 +77,41 @@ function TargetForm({ onSaved }) {
           />
         ))}
       </div>
+    </>
+  );
+}
+
+function TargetForm({ onSaved }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    color: COLORS[6],
+    startDate: todayStr(),
+    targetDate: "",
+  });
+
+  const submit = async (e) => {
+    e.preventDefault();
+    await api.addTarget(form);
+    setForm({ ...form, title: "", description: "", targetDate: "" });
+    setOpen(false);
+    onSaved();
+  };
+
+  if (!open) {
+    return (
+      <div className="targets-toolbar">
+        <button className="btn btn-small" onClick={() => setOpen(true)}>
+          ＋ New Target
+        </button>
+      </div>
+    );
+  }
+  return (
+    <form className="card form-card" onSubmit={submit}>
+      <h3>New target</h3>
+      <TargetFields form={form} setForm={setForm} />
       <div className="form-actions">
         <button type="submit" className="btn">
           Save
@@ -112,6 +121,68 @@ function TargetForm({ onSaved }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function TargetEditForm({ target, onSaved, onCancel }) {
+  const [form, setForm] = useState({
+    title: target.title,
+    description: target.description || "",
+    color: target.color,
+    startDate: target.startDate,
+    targetDate: target.targetDate,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await api.updateTarget(target.id, form);
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <form className="form-card" onSubmit={submit}>
+      <h3>Edit target</h3>
+      <TargetFields form={form} setForm={setForm} />
+      <div className="form-actions">
+        <button type="submit" className="btn" disabled={saving}>
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function MilestoneFields({ form, setForm }) {
+  return (
+    <>
+      <input
+        placeholder="Milestone, e.g. Finish Python module"
+        value={form.title}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+        required
+        autoFocus
+      />
+      <input
+        type="date"
+        title="Start date"
+        value={form.startDate}
+        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+        required
+      />
+      <input
+        type="date"
+        title="Due date"
+        value={form.dueDate}
+        onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+        required
+      />
+    </>
   );
 }
 
@@ -159,6 +230,8 @@ function SubtaskForm({ milestone, onSaved }) {
 
 function MilestoneRow({ milestone, subtasks, color, refresh, dnd }) {
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const stats = milestoneStats(milestone, subtasks);
   const badge = STATUS_LABELS[stats.status];
 
@@ -189,50 +262,80 @@ function MilestoneRow({ milestone, subtasks, color, refresh, dnd }) {
       </button>
       {expanded && (
         <div className="milestone-body">
-          <ul className="task-list">
-            {stats.tasks
-              .slice()
-              .sort((a, b) => a.date.localeCompare(b.date))
-              .map((task) => (
-                <li key={task.id} className={task.done ? "done" : ""}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={task.done}
-                      onChange={async () => {
-                        await api.updateSubtask(task.id, { done: !task.done });
-                        refresh();
-                      }}
-                    />
-                    <span className="task-title">{task.title}</span>
-                  </label>
-                  <span className="task-date">{taskDateLabel(task)}</span>
-                  <button
-                    className="btn-icon"
-                    title="Delete task"
-                    onClick={async () => {
-                      await api.deleteSubtask(task.id);
-                      refresh();
-                    }}
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-          </ul>
-          <SubtaskForm milestone={milestone} onSaved={refresh} />
-          <button
-            className="btn-icon btn-danger"
-            onClick={async () => {
-              if (confirm(`Delete milestone "${milestone.title}" and its tasks?`)) {
-                await api.deleteMilestone(milestone.id);
+          {editing ? (
+            <MilestoneEditForm
+              milestone={milestone}
+              onSaved={() => {
+                setEditing(false);
                 refresh();
-              }
-            }}
-          >
-            Delete milestone
-          </button>
+              }}
+              onCancel={() => setEditing(false)}
+            />
+          ) : (
+            <>
+              <ul className="task-list">
+                {stats.tasks
+                  .slice()
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((task) => (
+                    <li key={task.id} className={task.done ? "done" : ""}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={task.done}
+                          onChange={async () => {
+                            await api.updateSubtask(task.id, { done: !task.done });
+                            refresh();
+                          }}
+                        />
+                        <span className="task-title">{task.title}</span>
+                      </label>
+                      <span className="task-date">{taskDateLabel(task)}</span>
+                      <span className="row-actions">
+                        <button
+                          className="btn-icon"
+                          title="Edit task"
+                          onClick={() => setEditingTask(task)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn-icon"
+                          title="Delete task"
+                          onClick={async () => {
+                            await api.deleteSubtask(task.id);
+                            refresh();
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+              <SubtaskForm milestone={milestone} onSaved={refresh} />
+              <div className="milestone-actions">
+                <button className="btn-icon" onClick={() => setEditing(true)}>
+                  Edit milestone
+                </button>
+                <button
+                  className="btn-icon btn-danger"
+                  onClick={async () => {
+                    if (confirm(`Delete milestone "${milestone.title}" and its tasks?`)) {
+                      await api.deleteMilestone(milestone.id);
+                      refresh();
+                    }
+                  }}
+                >
+                  Delete milestone
+                </button>
+              </div>
+            </>
+          )}
         </div>
+      )}
+      {editingTask && (
+        <TaskEditModal task={editingTask} onClose={() => setEditingTask(null)} refresh={refresh} />
       )}
     </div>
   );
@@ -259,27 +362,7 @@ function MilestoneForm({ target, onSaved }) {
   }
   return (
     <form className="subtask-form" onSubmit={submit}>
-      <input
-        placeholder="Milestone, e.g. Finish Python module"
-        value={form.title}
-        onChange={(e) => setForm({ ...form, title: e.target.value })}
-        required
-        autoFocus
-      />
-      <input
-        type="date"
-        title="Start date"
-        value={form.startDate}
-        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-        required
-      />
-      <input
-        type="date"
-        title="Due date"
-        value={form.dueDate}
-        onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-        required
-      />
+      <MilestoneFields form={form} setForm={setForm} />
       <button type="submit" className="btn btn-small">
         Save
       </button>
@@ -290,56 +373,109 @@ function MilestoneForm({ target, onSaved }) {
   );
 }
 
+function MilestoneEditForm({ milestone, onSaved, onCancel }) {
+  const [form, setForm] = useState({
+    title: milestone.title,
+    startDate: milestone.startDate,
+    dueDate: milestone.dueDate,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await api.updateMilestone(milestone.id, form);
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <form className="subtask-form" onSubmit={submit}>
+      <MilestoneFields form={form} setForm={setForm} />
+      <button type="submit" className="btn btn-small" disabled={saving}>
+        {saving ? "Saving…" : "Save"}
+      </button>
+      <button type="button" className="btn btn-ghost btn-small" onClick={onCancel}>
+        Cancel
+      </button>
+    </form>
+  );
+}
+
 function TargetCard({ target, data, refresh }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [drag, setDrag] = useState({ id: null, over: null });
   const stats = targetStats(target, data.milestones, data.subtasks);
   const ordered = sortMilestones(stats.milestones);
 
   return (
     <section className="card target-card" style={{ "--accent-color": target.color }}>
-      <div
-        className="target-head clickable"
-        onClick={() => setOpen(!open)}
-        title={open ? "Collapse milestones" : "Expand milestones"}
-      >
-        <div>
-          <h2>
-            <span className="expander">{open ? "▾" : "▸"}</span> {target.title}
-          </h2>
-          {target.description && <p className="target-desc">{target.description}</p>}
-          <p className="target-dates">
-            {fmtDate(target.startDate)} → {fmtDate(target.targetDate)} ·{" "}
-            {stats.daysLeft >= 0 ? `${stats.daysLeft} days left` : "past target date"} ·{" "}
-            {stats.done}/{stats.total} tasks · {ordered.length} milestones
-          </p>
-        </div>
-        <div className="target-head-right">
-          <div className="big-pct" style={{ color: target.color }}>
-            {stats.completion}%
-          </div>
-          <button
-            className="btn-icon btn-danger"
-            title="Delete target"
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (confirm(`Delete target "${target.title}" and everything under it?`)) {
-                await api.deleteTarget(target.id);
-                refresh();
-              }
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-      <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${stats.completion}%`, background: target.color }}
+      {editing ? (
+        <TargetEditForm
+          target={target}
+          onSaved={() => {
+            setEditing(false);
+            refresh();
+          }}
+          onCancel={() => setEditing(false)}
         />
-      </div>
-      {open && (
+      ) : (
+        <>
+          <div
+            className="target-head clickable"
+            onClick={() => setOpen(!open)}
+            title={open ? "Collapse milestones" : "Expand milestones"}
+          >
+            <div>
+              <h2>
+                <span className="expander">{open ? "▾" : "▸"}</span> {target.title}
+              </h2>
+              {target.description && <p className="target-desc">{target.description}</p>}
+              <p className="target-dates">
+                {fmtDate(target.startDate)} → {fmtDate(target.targetDate)} ·{" "}
+                {stats.daysLeft >= 0 ? `${stats.daysLeft} days left` : "past target date"} ·{" "}
+                {stats.done}/{stats.total} tasks · {ordered.length} milestones
+              </p>
+            </div>
+            <div className="target-head-right">
+              <div className="big-pct" style={{ color: target.color }}>
+                {stats.completion}%
+              </div>
+              <button
+                className="btn-icon"
+                title="Edit target"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(true);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="btn-icon btn-danger"
+                title="Delete target"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (confirm(`Delete target "${target.title}" and everything under it?`)) {
+                    await api.deleteTarget(target.id);
+                    refresh();
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${stats.completion}%`, background: target.color }}
+            />
+          </div>
+        </>
+      )}
+      {open && !editing && (
         <div className="milestones">
           {ordered.map((m) => (
             <MilestoneRow

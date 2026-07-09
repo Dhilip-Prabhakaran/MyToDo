@@ -45,18 +45,11 @@ function rangeDays(lo, hi, cap = 180) {
   return days;
 }
 
-function RangePanel({ lo, hi, data, refresh }) {
-  const days = rangeDays(lo, hi);
+// Below the calendar: the form that adds a task to the current selection.
+function AddTaskForm({ lo, hi, data, refresh }) {
   const single = lo === hi;
-  const milestoneById = Object.fromEntries(data.milestones.map((m) => [m.id, m]));
+  const dayCount = rangeDays(lo, hi).length;
   const [form, setForm] = useState({ milestoneId: "", title: "", mode: "single" });
-
-  // Unique tasks across the range (a spanning task counts once).
-  const seen = new Set();
-  const allTasks = days
-    .flatMap((d) => dayStats(data.subtasks, d).tasks)
-    .filter((t) => !seen.has(t.id) && seen.add(t.id));
-  const doneCount = allTasks.filter((t) => t.done).length;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -66,16 +59,105 @@ function RangePanel({ lo, hi, data, refresh }) {
       date: lo,
       ...(single ? {} : { endDate: hi, mode: form.mode }),
     });
-    setForm({ ...form, title: "" });
+    setForm((f) => ({ ...f, title: "" }));
     refresh();
   };
+
+  return (
+    <section className="card">
+      <div className="card-head">
+        <div>
+          <h3>Add a task</h3>
+          <p className="card-sub">
+            {single ? `On ${fmtDate(lo)}` : `${fmtDate(lo)} → ${fmtDate(hi)} · ${dayCount} days`}
+          </p>
+        </div>
+      </div>
+
+      {data.milestones.length === 0 ? (
+        <p className="hint">Create a target with a milestone first to add tasks.</p>
+      ) : (
+        <form className="add-task-form" onSubmit={submit}>
+          <div className="add-task-row">
+            <select
+              value={form.milestoneId}
+              onChange={(e) => setForm({ ...form, milestoneId: e.target.value })}
+              required
+            >
+              <option value="">Milestone…</option>
+              {data.targets.map((t) => (
+                <optgroup key={t.id} label={t.title}>
+                  {sortMilestones(data.milestones)
+                    .filter((m) => m.targetId === t.id)
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.title}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+            <input
+              placeholder="Task title"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              required
+            />
+            <button type="submit" className="btn">
+              {single
+                ? "Add task"
+                : form.mode === "single"
+                  ? "Add spanning task"
+                  : `Add to ${dayCount} days`}
+            </button>
+          </div>
+          {!single && (
+            <div className="mode-picker mode-picker-inline">
+              <label>
+                <input
+                  type="radio"
+                  name="range-mode"
+                  checked={form.mode === "single"}
+                  onChange={() => setForm({ ...form, mode: "single" })}
+                />
+                One task spanning {dayCount} days
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="range-mode"
+                  checked={form.mode === "daily"}
+                  onChange={() => setForm({ ...form, mode: "daily" })}
+                />
+                Repeat daily ({dayCount} separate tasks)
+              </label>
+            </div>
+          )}
+        </form>
+      )}
+    </section>
+  );
+}
+
+// Right column: read-only list of tasks in the current selection.
+function SelectionTasks({ lo, hi, data, refresh }) {
+  const days = rangeDays(lo, hi);
+  const single = lo === hi;
+  const milestoneById = Object.fromEntries(data.milestones.map((m) => [m.id, m]));
+
+  // Unique tasks across the range (a spanning task counts once).
+  const seen = new Set();
+  const allTasks = days
+    .flatMap((d) => dayStats(data.subtasks, d).tasks)
+    .filter((t) => !seen.has(t.id) && seen.add(t.id));
+  const doneCount = allTasks.filter((t) => t.done).length;
 
   return (
     <section className="card day-panel">
       <h3>{single ? fmtDate(lo) : `${fmtDate(lo)} → ${fmtDate(hi)} (${days.length} days)`}</h3>
       <p className="hint">
         {allTasks.length === 0
-          ? "No tasks in this selection."
+          ? "No tasks in this selection yet — add one below the calendar."
           : `${doneCount}/${allTasks.length} done`}
       </p>
 
@@ -123,66 +205,6 @@ function RangePanel({ lo, hi, data, refresh }) {
           </div>
         );
       })}
-
-      {data.milestones.length === 0 ? (
-        <p className="hint">Create a target with a milestone first to add tasks.</p>
-      ) : (
-        <form className="day-panel-form" onSubmit={submit}>
-          <select
-            value={form.milestoneId}
-            onChange={(e) => setForm({ ...form, milestoneId: e.target.value })}
-            required
-          >
-            <option value="">Milestone…</option>
-            {data.targets.map((t) => (
-              <optgroup key={t.id} label={t.title}>
-                {sortMilestones(data.milestones)
-                  .filter((m) => m.targetId === t.id)
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.title}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-          <input
-            placeholder="Task title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          {!single && (
-            <div className="mode-picker">
-              <label>
-                <input
-                  type="radio"
-                  name="range-mode"
-                  checked={form.mode === "single"}
-                  onChange={() => setForm({ ...form, mode: "single" })}
-                />
-                One task spanning {days.length} days
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="range-mode"
-                  checked={form.mode === "daily"}
-                  onChange={() => setForm({ ...form, mode: "daily" })}
-                />
-                Repeat daily ({days.length} separate tasks)
-              </label>
-            </div>
-          )}
-          <button type="submit" className="btn btn-small">
-            {single
-              ? `Add task on ${fmtDate(lo)}`
-              : form.mode === "single"
-                ? `Add 1 task for ${fmtDate(lo)}–${fmtDate(hi)}`
-                : `Add to each of ${days.length} days`}
-          </button>
-        </form>
-      )}
     </section>
   );
 }
@@ -218,86 +240,86 @@ export default function Calendar({ data, refresh, viewDate, onViewChange }) {
 
   return (
     <div className="calendar-layout">
-      <section className="card">
-        <div className="cal-toolbar">
-          <h2>
-            {MONTHS[viewDate.month]} {viewDate.year}
-          </h2>
-          <div className="cal-nav">
-            <button className="nav-btn" title="Previous month" onClick={() => move(-1)}>
-              ‹
-            </button>
-            <button className="nav-btn nav-today" onClick={goToday}>
-              Today
-            </button>
-            <button className="nav-btn" title="Next month" onClick={() => move(1)}>
-              ›
-            </button>
-          </div>
-        </div>
-        <div className={`cal-grid ${dragging ? "dragging" : ""}`}>
-          {DOW.map((d) => (
-            <div key={d} className="cal-dow">
-              {d}
-            </div>
-          ))}
-          {cells.map((cell) => {
-            const stats = dayStats(data.subtasks, cell.date);
-            const missed = cell.date < today && stats.total > 0 && stats.done < stats.total;
-            const inRange = cell.date >= lo && cell.date <= hi;
-            const targetColors = [
-              ...new Set(
-                stats.tasks
-                  .map((t) => targetById[milestoneById[t.milestoneId]?.targetId]?.color)
-                  .filter(Boolean)
-              ),
-            ].slice(0, 4);
-            return (
-              <button
-                key={cell.date}
-                className={[
-                  "cal-cell",
-                  cell.outside ? "outside" : "",
-                  cell.date === today ? "today" : "",
-                  inRange ? "in-range" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setSel({ start: cell.date, end: cell.date });
-                  setDragging(true);
-                }}
-                onMouseEnter={() => {
-                  if (dragging) setSel((s) => ({ ...s, end: cell.date }));
-                }}
-              >
-                <span className="cal-daynum">{cell.day}</span>
-                {stats.total > 0 && (
-                  <span
-                    className={`cal-count ${
-                      stats.done === stats.total ? "all-done" : missed ? "missed" : ""
-                    }`}
-                  >
-                    {stats.done}/{stats.total}
-                  </span>
-                )}
-                <span className="cal-dots">
-                  {targetColors.map((c) => (
-                    <span key={c} className="cal-dot" style={{ background: c }} />
-                  ))}
-                </span>
+      <div className="cal-main">
+        <section className="card">
+          <div className="cal-toolbar">
+            <h2>
+              {MONTHS[viewDate.month]} {viewDate.year}
+            </h2>
+            <div className="cal-nav">
+              <button className="nav-btn" title="Previous month" onClick={() => move(-1)}>
+                ‹
               </button>
-            );
-          })}
-        </div>
-        <p className="hint">
-          Click a day, or <strong>hold and drag across days</strong> to select a range — then add
-          one task to every day in it. Green = all done, red = missed.
-        </p>
-      </section>
+              <button className="nav-btn nav-today" onClick={goToday}>
+                Today
+              </button>
+              <button className="nav-btn" title="Next month" onClick={() => move(1)}>
+                ›
+              </button>
+            </div>
+          </div>
+          <div className={`cal-grid ${dragging ? "dragging" : ""}`}>
+            {DOW.map((d) => (
+              <div key={d} className="cal-dow">
+                {d}
+              </div>
+            ))}
+            {cells.map((cell) => {
+              const stats = dayStats(data.subtasks, cell.date);
+              const missed = cell.date < today && stats.total > 0 && stats.done < stats.total;
+              const inRange = cell.date >= lo && cell.date <= hi;
+              const targetColors = [
+                ...new Set(
+                  stats.tasks
+                    .map((t) => targetById[milestoneById[t.milestoneId]?.targetId]?.color)
+                    .filter(Boolean)
+                ),
+              ].slice(0, 4);
+              return (
+                <button
+                  key={cell.date}
+                  className={[
+                    "cal-cell",
+                    cell.outside ? "outside" : "",
+                    cell.date === today ? "today" : "",
+                    inRange ? "in-range" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSel({ start: cell.date, end: cell.date });
+                    setDragging(true);
+                  }}
+                  onMouseEnter={() => {
+                    if (dragging) setSel((s) => ({ ...s, end: cell.date }));
+                  }}
+                >
+                  <span className="cal-daynum">{cell.day}</span>
+                  {stats.total > 0 && (
+                    <span
+                      className={`cal-count ${
+                        stats.done === stats.total ? "all-done" : missed ? "missed" : ""
+                      }`}
+                    >
+                      {stats.done}/{stats.total}
+                    </span>
+                  )}
+                  <span className="cal-dots">
+                    {targetColors.map((c) => (
+                      <span key={c} className="cal-dot" style={{ background: c }} />
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      <RangePanel lo={lo} hi={hi} data={data} refresh={refresh} />
+        <AddTaskForm lo={lo} hi={hi} data={data} refresh={refresh} />
+      </div>
+
+      <SelectionTasks lo={lo} hi={hi} data={data} refresh={refresh} />
     </div>
   );
 }

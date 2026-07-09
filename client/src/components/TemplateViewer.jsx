@@ -4,26 +4,28 @@
 export default function TemplateViewer({ template, onBack }) {
   return (
     <div className="doc-editor">
-      <div className="doc-toolbar card">
+      <div className="doc-toolbar">
         <button className="nav-btn nav-today" onClick={onBack}>
           ← Library
         </button>
-        <span className="doc-viewer-name">{template.title}</span>
+        <span className="doc-toolbar-crumb">
+          Template {template.code} · {template.title}
+        </span>
         <span className="chip chip-gold">Worked example · Banyan ATS</span>
       </div>
 
-      <section className="card">
+      <section className="card doc-header">
         <p className="eyebrow">Business analysis · Template {template.code}</p>
-        <h3>{template.title}</h3>
+        <h2>{template.title}</h2>
         <p className="doc-guidance">{template.tagline}</p>
-        <div className="doc-howto-open">
-          <h4>How to use this template</h4>
+        <details className="doc-howto">
+          <summary>How to use this template</summary>
           <ul>
             {template.howToUse.map((line, i) => (
               <li key={i}>{line}</li>
             ))}
           </ul>
-        </div>
+        </details>
       </section>
 
       <section className="card">
