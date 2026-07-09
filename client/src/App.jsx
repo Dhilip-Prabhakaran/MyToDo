@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api.js";
-import Logo from "./components/Logo.jsx";
 import Home from "./components/Home.jsx";
 import TargetsPage from "./components/TargetsPage.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
@@ -36,14 +35,13 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="brand">
-            <Logo size={38} />
             <h1 className="wordmark">
-              <span className="wm-teal">M</span>
-              <span className="wm-cyan">y</span>
-              <span className="wm-red">T</span>
-              <span className="wm-black">o</span>
-              <span className="wm-teal">D</span>
-              <span className="wm-cyan">o</span>
+              <span className="wm-1">M</span>
+              <span className="wm-2">y</span>
+              <span className="wm-3">T</span>
+              <span className="wm-4">o</span>
+              <span className="wm-5">D</span>
+              <span className="wm-6">o</span>
             </h1>
           </div>
           <nav className="tabs">

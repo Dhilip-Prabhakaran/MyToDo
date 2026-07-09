@@ -93,34 +93,43 @@ h4 {
 }
 
 .brand svg {
-  display: block;
+  display: none;
   flex-shrink: 0;
 }
 
 .brand h1 {
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0;
 }
 
 .wordmark {
   display: inline-flex;
 }
 
-.wm-teal {
-  color: var(--teal);
+.wm-1 {
+  color: #0078D4;
 }
 
-.wm-cyan {
-  color: var(--cyan);
+.wm-2 {
+  color: #E81B23;
 }
 
-.wm-red {
-  color: var(--red);
+.wm-3 {
+  color: #107C10;
 }
 
-.wm-black {
-  color: var(--ink);
+.wm-4 {
+  color: #FFB900;
+}
+
+.wm-5 {
+  color: #7D3C98;
+}
+
+.wm-6 {
+  color: #00A4EF;
 }
 
 .tabs {
