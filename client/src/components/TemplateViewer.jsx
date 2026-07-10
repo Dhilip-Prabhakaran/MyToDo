@@ -1,3 +1,105 @@
+// Colour-code known register values so the example reads at a glance.
+function badgeClass(kind, value) {
+  const v = value.toLowerCase();
+  if (kind === "influence") {
+    if (v.startsWith("high")) return "chip-red";
+    if (v.startsWith("medium")) return "chip-gold";
+    return "chip-grey";
+  }
+  if (kind === "user") {
+    // Check "limited" first — "scorecard" contains the substring "core".
+    if (v.includes("limited")) return "chip-gold";
+    if (v.includes("core")) return "chip-green";
+    return "chip-grey";
+  }
+  return "chip-grey";
+}
+
+function ExampleTable({ table }) {
+  return (
+    <div className="doc-table-wrap">
+      <table className="doc-table">
+        <thead>
+          <tr>
+            {table.columns.map((c) => (
+              <th key={c.label}>{c.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row, ri) => (
+            <tr key={ri}>
+              {row.map((cell, ci) => {
+                const col = table.columns[ci];
+                return (
+                  <td key={ci}>
+                    {col.badge ? (
+                      <span className={`chip ${badgeClass(col.badge, cell)}`}>{cell}</span>
+                    ) : (
+                      cell
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ExampleCards({ cards }) {
+  return (
+    <div className="doc-cards">
+      {cards.map((card, i) => (
+        <div key={i} className="doc-card">
+          {card.title && (
+            <div className="doc-card-head">
+              <span className="doc-card-name">{card.title}</span>
+              {card.subtitle && <span className="doc-card-role">{card.subtitle}</span>}
+            </div>
+          )}
+          {card.fields.map((f, fi) => (
+            <div key={fi} className={`doc-field ${f.highlight ? "highlight" : ""}`}>
+              <span className="doc-field-label">{f.label}</span>
+              {f.items ? (
+                <ul className="doc-field-list">
+                  {f.items.map((it, ii) => (
+                    <li key={ii}>{it}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="doc-field-text">{f.text}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// One section's worked example — table, structured cards, or prose,
+// whichever the section supplies. Falls back to the blank-copy placeholder.
+function SectionExample({ section }) {
+  if (section.exampleTable || section.exampleCards || section.example) {
+    return (
+      <>
+        <p className="doc-example-label">Example · Banyan ATS</p>
+        {section.exampleTable ? (
+          <ExampleTable table={section.exampleTable} />
+        ) : section.exampleCards ? (
+          <ExampleCards cards={section.exampleCards} />
+        ) : (
+          <div className="doc-body">{section.example}</div>
+        )}
+      </>
+    );
+  }
+  return <p className="hint">{section.placeholder}</p>;
+}
+
 // Read-only view of a learning template: guidance and prompts for each
 // section, with the complete worked example (Banyan ATS) shown as the
 // document body.
@@ -52,14 +154,7 @@ export default function TemplateViewer({ template, onBack }) {
               <strong>Prompts</strong> · {s.prompts}
             </p>
           )}
-          {s.example ? (
-            <>
-              <p className="doc-example-label">Example · Banyan ATS</p>
-              <div className="doc-body">{s.example}</div>
-            </>
-          ) : (
-            <p className="hint">{s.placeholder}</p>
-          )}
+          <SectionExample section={s} />
         </section>
       ))}
     </div>

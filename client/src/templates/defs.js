@@ -135,32 +135,178 @@ export const TEMPLATES = [
     ],
   },
   {
-    id: "business-requirements",
+    id: "stakeholders-personas",
     code: "02",
+    status: "ready",
+    title: "Stakeholders & Personas",
+    tagline:
+      "Define WHO cares about the system (stakeholders) and WHO actually uses it (personas) — the second BA artifact, right after the problem statement.",
+    tags: ["discovery", "users"],
+    howToUse: [
+      "Fill Part A first (wide net — everyone who cares), then Part B for only the rows marked as users, then Part C last.",
+      "Personas must come from real observation, not invented demographics. Give each a name and one TELLING DETAIL — a specific human thing that makes design decisions concrete.",
+      "If two personas share goals and frustrations, they are one persona, not two — usually 3–4 personas is enough.",
+      "Keep the guidance while learning; delete it once each section has real content.",
+    ],
+    meta: [
+      { key: "project", label: "Project / Product", placeholder: "e.g. Banyan ATS" },
+      { key: "author", label: "Author", placeholder: "who wrote this" },
+      { key: "date", label: "Date", placeholder: "YYYY-MM-DD" },
+      { key: "version", label: "Version", placeholder: "v0.1 (draft), v1.0 (agreed) …" },
+      { key: "status", label: "Status", placeholder: "Draft / In review / Approved" },
+    ],
+    exampleMeta: {
+      project: "Banyan ATS",
+      author: "BA learner (you)",
+      date: "2026-07-07",
+      version: "v0.1 (draft)",
+      status: "Draft",
+    },
+    sections: [
+      {
+        key: "keyIdea",
+        num: 1,
+        title: "Key idea",
+        guidance:
+          "A STAKEHOLDER is anyone who cares about the system (affected by it, funds it, constrains it, judges it). A USER is the narrower group who actually touches the software. Every user is a stakeholder; not every stakeholder is a user.",
+        prompts: "",
+        placeholder:
+          "Part A lists everyone — wide and shallow. Part B goes deep only on the people who actually use it.",
+        example: "",
+      },
+      {
+        key: "stakeholderRegister",
+        num: 2,
+        title: "Part A — Stakeholder register",
+        guidance:
+          "Everyone who cares, whether or not they log in. Influence = High / Medium / Low. The \"Is a user?\" column is the hinge — it decides who gets a persona in Part B.",
+        prompts: "Aim for 6–9 rows. Influence and the user column are colour-coded so the register is scannable at a glance.",
+        placeholder: "e.g. Company founder — fast, correct hires; value for money — High — Rarely",
+        exampleTable: {
+          columns: [
+            { label: "Stakeholder" },
+            { label: "Main interest" },
+            { label: "Influence", badge: "influence" },
+            { label: "Is a user?", badge: "user" },
+          ],
+          rows: [
+            ["Founder / co-founders", "Fast, correct hires; value for money", "High", "Rarely — reports only"],
+            ["Director", "Correct hires; reviews recruitment reports", "High", "Rarely"],
+            ["Department Head", "A candidate with the right skillset for a vacancy", "High", "Rarely"],
+            ["HR Manager (Admin)", "Configure & oversee the whole flow; records & logs", "High", "Core user"],
+            ["Hiring Manager", "Publish jobs; assign candidates; approve key stages", "High", "Core user"],
+            ["HR Executive / Recruiter", "Work the board daily; move candidates; schedule", "Medium", "Core user"],
+            ["Panel Member", "Interview and score candidates", "Medium", "Limited — scorecard only"],
+            ["Candidate", "Apply; track progress; (later) self-schedule", "Low", "Limited — application form"],
+            ["Employee Referrer", "Refer known candidates; referral bonus", "Low", "Limited — referral (later)"],
+            ["Accounts / Finance", "Salary budget for open roles", "Low", "Not a user"],
+            ["Background Verification Team", "Verify certificates of hired candidates", "Low", "Not a user"],
+            ["3rd-party Assessment Team", "Conduct written / mass assessments", "Low", "Not a user"],
+          ],
+        },
+      },
+      {
+        key: "personas",
+        num: 3,
+        title: "Part B — Personas",
+        guidance:
+          "One card per person who ACTUALLY uses the system (usually 3–4). Draw on real people. If two personas share goals and frustrations, they are one persona, not two.",
+        prompts:
+          "Personas must come from real observation, not invented demographics. Give each a name and one TELLING DETAIL — a specific human thing that makes design decisions concrete.",
+        placeholder:
+          "[ Name ] — [ role ]\nSnapshot: age-ish, context, how technical, how often they hire.\nIn the process, they: what they actually do — post? screen? interview? decide?\nGoals: goal 1. goal 2.\nFrustrations today: frustration 1. frustration 2.\nNeeds from the system: need 1 (outcome, not feature). need 2.\nTelling detail: ONE specific human thing — a habit, a fear, a workaround. The highest-value line.\n\nRepeat for each persona (usually 3–4).",
+        exampleCards: [
+          {
+            title: "Arthi",
+            subtitle: "HR Manager (Admin)",
+            fields: [
+              { label: "Snapshot", text: "HR Manager at a ~100-employee firm; comfortable with software; owns the hiring system end to end." },
+              { label: "In the process, they", text: "Hold all permissions; create job openings from department needs; design each job's process (stages + scoring) with leadership; assign whole jobs or candidates to hiring managers; use override permission to resolve discrepancies; export reports for the director and founders." },
+              { label: "Goals", items: ["A well-defined, consistent process for every job", "Live visibility of progress"] },
+              { label: "Frustrations today", items: ["Candidates apply through several HRs at once — no single view", "Rushing every job's flow into one day causes poor selection"] },
+              { label: "Needs from the system", items: ["A predefined flow (stages + scoring) attached to each job at posting time", "Progress reports and automation wherever possible"] },
+              { label: "Telling detail", text: "She has been burned by two recruiters unknowingly chasing the same candidate, so she instinctively wants to see everything herself — making her the bottleneck she resents being.", highlight: true },
+            ],
+          },
+          {
+            title: "Mani",
+            subtitle: "Hiring Manager",
+            fields: [
+              { label: "Snapshot", text: "Manages a team of recruiters; accountable for filling his department's roles." },
+              { label: "In the process, they", text: "Assign candidates to recruiters; approve candidates at key stages; form interview / demo / group-discussion panels; invite panel members with schedules; balance recruiter workloads." },
+              { label: "Goals", items: ["Smoothly monitor recruitment", "Balance his team's workload"] },
+              { label: "Frustrations today", items: ["Hard to centralize and follow different processes for different jobs at once"] },
+              { label: "Needs from the system", items: ["A clear workflow and automation to manage workloads", "Live monitoring of recruiter activity"] },
+              { label: "Telling detail", text: "Mani lives in back-to-back meetings; his real fear is a strong candidate going cold while he's away from his desk — so he wants the system to nudge him when his approval is the hold-up.", highlight: true },
+            ],
+          },
+          {
+            title: "Rachel",
+            subtitle: "Recruiter (HR Executive)",
+            fields: [
+              { label: "Snapshot", text: "Executes day-to-day recruitment; lives in the board." },
+              { label: "In the process, they", text: "Enter scores at each stage; move candidates between stages; manually record outcomes from assessment and background-verification teams; email candidates and panel members; build schedules, create slots, allocate panel members." },
+              { label: "Goals", items: ["Move candidates stage by stage", "Complete the process cleanly"] },
+              { label: "Frustrations today", items: ["Tracking every candidate in Excel is hard", "Each recruiter keeps their own data; coordination is painful"] },
+              { label: "Needs from the system", items: ["A smooth interface to move candidates through stages", "Less dependence on managers via a preset flow", "Easy scheduling and communication"] },
+              { label: "Telling detail", text: "Rachel is often the scapegoat when an unplanned process goes wrong — so she wants the process visible and enforced, to share accountability rather than carry it alone.", highlight: true },
+            ],
+          },
+          {
+            title: "Cathy",
+            subtitle: "Candidate",
+            fields: [
+              { label: "Snapshot", text: "Applies expecting a clear JD, a seamless application, visibility of the major stages, and no unnecessary waiting." },
+              { label: "In the process, they", text: "Apply via web portal (or hard copy); fill the form; upload documents; (later) self-schedule slots; move through each stage; accept the offer." },
+              { label: "Goals", items: ["Zero unnecessary waiting", "Clear communication and hassle-free scheduling"] },
+              { label: "Frustrations today", items: ["Made to wait for hours because interview planning is poor"] },
+              { label: "Needs from the system", items: ["An application portal and two-way communication", "(Later) self-scheduling for distant candidates"] },
+              { label: "Telling detail", text: "Cathy once lost a whole day to a disorganized, uncommunicative process; with no clear schedule she couldn't plan her travel, and now judges a company by how it runs its hiring.", highlight: true },
+            ],
+          },
+        ],
+      },
+      {
+        key: "implications",
+        num: 4,
+        title: "Part C — What this tells us (design implications)",
+        guidance:
+          "Fill last. This is where the artifact earns its keep — it should change what you build.",
+        prompts: "",
+        placeholder:
+          "Primary persona (optimise for first): who, and WHY — think frequency & centrality of use, not who has most permissions.\nA stakeholder who is NOT a user but must be satisfied: who, and how — a report? a guarantee?\nWhat writing this surfaced: one thing a persona needs that you'd have missed otherwise.",
+        exampleCards: [
+          {
+            fields: [
+              { label: "Primary persona (optimise for first)", text: "Admin (Arthi). Admin and Recruiter share the same core board; Admin is a superset with extra config/override screens. Optimise the shared board for the high-frequency daily flow, and keep admin-only controls on separate screens so the board stays fast. (Watch: don't let override controls clutter the daily board.)" },
+              { label: "A stakeholder who is NOT a user but must be satisfied", text: "The Founder. A mis-hire costs 3–6 months of salary plus training. Satisfy through a transparent report: recruitment funnel, filtering steps, candidate–JD match, and time-to-hire." },
+              { label: "What writing this surfaced", text: "The three internal personas map onto three permission tiers — Admin / Hiring Manager / Recruiter. The product needs Role-Based Access Control (RBAC), discovered by profiling real people.", highlight: true },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "business-requirements",
+    code: "03",
     status: "planned",
     title: "Business Requirements",
     tagline: "The BRD: turning an agreed problem into what the business needs the solution to do.",
   },
   {
     id: "user-stories",
-    code: "03",
+    code: "04",
     status: "planned",
     title: "User Stories & Acceptance",
     tagline: "Small, testable slices of need with clear pass/fail acceptance criteria.",
   },
   {
     id: "process-flow",
-    code: "04",
+    code: "05",
     status: "planned",
     title: "Process Flow (As-Is / To-Be)",
     tagline: "Map how work happens today and how it should happen once the solution exists.",
-  },
-  {
-    id: "stakeholder-map",
-    code: "05",
-    status: "planned",
-    title: "Stakeholder Map",
-    tagline: "Who is affected, who decides, and how closely each needs to be engaged.",
   },
 ];
 
