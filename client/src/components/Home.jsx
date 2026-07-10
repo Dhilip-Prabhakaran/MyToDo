@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import {
   todayStr,
-  dayStats,
+  dueStats,
   streak,
   fmtDate,
   addDays,
@@ -101,9 +101,9 @@ export default function Home({ data, refresh }) {
   const [planOpen, setPlanOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const today = todayStr();
-  const stats = dayStats(data.subtasks, today);
+  const stats = dueStats(data.subtasks, today);
   const currentStreak = streak(data.subtasks);
-  const tomorrow = dayStats(data.subtasks, addDays(today, 1));
+  const tomorrow = dueStats(data.subtasks, addDays(today, 1));
   const days = lastNDays(data.subtasks, 14);
   const totalDone = data.subtasks.filter((s) => s.done).length;
   const activeDays = days.filter((d) => d.total > 0);

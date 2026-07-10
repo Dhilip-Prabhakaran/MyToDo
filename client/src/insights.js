@@ -36,13 +36,26 @@ export function sortMilestones(list) {
   );
 }
 
-// Tasks scheduled for a given day, with completion stats.
-// A task with an endDate spans date..endDate and appears on every day in the range
-// (it is still ONE task — completing it marks it done for the whole range).
+// Tasks TOUCHING a given day (range semantics), with completion stats.
+// A task with an endDate spans date..endDate and appears on every day in the range.
+// Used by the Calendar to draw a spanning task across the grid. For "what must I
+// finish today", use dueStats instead.
 export function dayStats(subtasks, dateStr) {
   const tasks = subtasks.filter((s) =>
     s.endDate ? s.date <= dateStr && dateStr <= s.endDate : s.date === dateStr
   );
+  const done = tasks.filter((s) => s.done).length;
+  return { tasks, done, total: tasks.length, pct: pct(done, tasks.length) };
+}
+
+// Tasks DUE on a given day (due-date semantics), with completion stats.
+// A spanning task (endDate set) is ONE piece of work to finish by its final day —
+// not a daily obligation — so it counts toward exactly that one day, not every day
+// in the range. Single tasks are due on their date. This drives the daily list,
+// the streak, and the 14-day chart, so a multi-day task isn't a nagging unchecked
+// row (dragging the day's %) on each of its in-progress days.
+export function dueStats(subtasks, dateStr) {
+  const tasks = subtasks.filter((s) => (s.endDate || s.date) === dateStr);
   const done = tasks.filter((s) => s.done).length;
   return { tasks, done, total: tasks.length, pct: pct(done, tasks.length) };
 }
@@ -91,12 +104,13 @@ export function targetStats(target, milestones, subtasks) {
 }
 
 // Completion % for each of the last n days (oldest first) — feeds the bar chart.
+// Due-date semantics: a spanning task counts on its final day only.
 export function lastNDays(subtasks, n = 14) {
   const today = todayStr();
   const days = [];
   for (let i = n - 1; i >= 0; i--) {
     const date = addDays(today, -i);
-    days.push({ date, ...dayStats(subtasks, date) });
+    days.push({ date, ...dueStats(subtasks, date) });
   }
   return days;
 }
@@ -105,10 +119,10 @@ export function lastNDays(subtasks, n = 14) {
 export function streak(subtasks) {
   let count = 0;
   let date = todayStr();
-  const todayDone = dayStats(subtasks, date);
+  const todayDone = dueStats(subtasks, date);
   if (todayDone.total === 0 || todayDone.done < todayDone.total) date = addDays(date, -1);
   for (;;) {
-    const { total, done } = dayStats(subtasks, date);
+    const { total, done } = dueStats(subtasks, date);
     if (total === 0 || done < total) break;
     count++;
     date = addDays(date, -1);
