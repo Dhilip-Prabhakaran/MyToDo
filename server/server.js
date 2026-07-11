@@ -4,7 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initDb, load, save, backend } from "./db.js";
+import { initDb, load, save, backend, writeBackup } from "./db.js";
 
 const app = express();
 app.use(cors());
@@ -247,6 +247,29 @@ app.put("/api/habits/:id/log", (req, res) => {
   }
   persist();
   res.json({ ok: true });
+});
+
+// ---------- restore from an exported backup ----------
+// Body is the JSON produced by the Export button (or a rolling snapshot from
+// server/data/backups). Replaces the whole state; the outgoing state is first
+// written as a labelled safety snapshot so a mistaken import is recoverable.
+const STATE_KEYS = ["targets", "milestones", "subtasks", "habits", "habitLogs"];
+
+app.post("/api/restore", (req, res) => {
+  const body = req.body;
+  if (!body || typeof body !== "object" || !STATE_KEYS.some((k) => Array.isArray(body[k]))) {
+    return res.status(400).json({ error: "not a MyToDo backup: no data arrays found" });
+  }
+  const bad = STATE_KEYS.find((k) => body[k] !== undefined && !Array.isArray(body[k]));
+  if (bad) return res.status(400).json({ error: `field "${bad}" must be an array` });
+
+  writeBackup(state, `pre-restore-${Date.now()}.json`);
+  state = Object.fromEntries(STATE_KEYS.map((k) => [k, body[k] || []]));
+  persist();
+  res.json({
+    ok: true,
+    counts: Object.fromEntries(STATE_KEYS.map((k) => [k, state[k].length])),
+  });
 });
 
 // ---------- serve the built frontend in production ----------

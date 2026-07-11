@@ -17,6 +17,7 @@ import ProgressRing from "./ProgressRing.jsx";
 import Calendar from "./Calendar.jsx";
 import TaskEditModal from "./TaskEditModal.jsx";
 import HabitQuickList from "./HabitQuickList.jsx";
+import QuickAdd from "./QuickAdd.jsx";
 
 // A pinned "today's focus" task is the one thing that matters most that day —
 // capped low on purpose, otherwise everything ends up pinned and nothing does.
@@ -204,6 +205,8 @@ export default function Home({ data, refresh }) {
             </button>
           </div>
         </section>
+
+        <QuickAdd data={data} refresh={refresh} />
 
         {overdue.length > 0 && (
           <section className="card pace-alert">

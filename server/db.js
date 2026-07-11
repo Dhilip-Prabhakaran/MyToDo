@@ -34,6 +34,32 @@ function fileSave(state) {
   fs.renameSync(tmp, dbFile);
 }
 
+// ---------- rolling daily backups (both backends) ----------
+// One snapshot file per calendar day, overwritten on every save so the
+// current day's file is always up to the minute; the newest KEEP days are
+// retained. Insurance against a bad delete or a corrupted store — restore
+// by importing a snapshot via the Import button (POST /api/restore).
+const backupDir = path.join(dataDir, "backups");
+const BACKUP_KEEP = 7;
+
+export function writeBackup(state, label = null) {
+  try {
+    fs.mkdirSync(backupDir, { recursive: true });
+    const name = label || `state-${new Date().toISOString().slice(0, 10)}.json`;
+    fs.writeFileSync(path.join(backupDir, name), JSON.stringify(state, null, 2));
+    // prune: keep the newest BACKUP_KEEP daily snapshots (labelled ones too)
+    const files = fs
+      .readdirSync(backupDir)
+      .filter((f) => f.endsWith(".json"))
+      .sort();
+    for (const f of files.slice(0, Math.max(files.length - BACKUP_KEEP, 0))) {
+      fs.unlinkSync(path.join(backupDir, f));
+    }
+  } catch (e) {
+    console.error("Backup failed:", e.message); // never block a save on backup trouble
+  }
+}
+
 // ---------- MongoDB backend ----------
 let collection = null;
 
@@ -67,5 +93,6 @@ export async function load() {
 }
 
 export async function save(state) {
+  writeBackup(state);
   return MONGODB_URI ? mongoSave(state) : fileSave(state);
 }

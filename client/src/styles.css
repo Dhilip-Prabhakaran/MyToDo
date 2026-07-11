@@ -2183,6 +2183,29 @@ li.done .task-title {
   text-overflow: ellipsis;
 }
 
+/* ---------- quick-add (Home) ---------- */
+.quickadd-toggle {
+  margin-bottom: 16px;
+}
+
+.quickadd-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+  margin: 0 0 16px;
+}
+
+.quickadd-form select {
+  max-width: 220px;
+}
+
+.quickadd-form input:not([type="date"]) {
+  flex: 1;
+  min-width: 160px;
+}
+
 /* ---------- in-progress spanning tasks (Home) ---------- */
 .inprogress-card {
   border-left: 3px solid var(--cyan);

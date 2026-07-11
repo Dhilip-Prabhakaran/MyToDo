@@ -32,4 +32,6 @@ export const api = {
   updateHabit: (id, data) => req("PUT", `/api/habits/${id}`, data),
   deleteHabit: (id) => req("DELETE", `/api/habits/${id}`),
   logHabit: (id, date, done) => req("PUT", `/api/habits/${id}/log`, { date, done }),
+
+  restore: (backup) => req("POST", "/api/restore", backup),
 };

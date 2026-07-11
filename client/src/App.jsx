@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.js";
 import { todayStr } from "./insights.js";
 import Home from "./components/Home.jsx";
@@ -44,6 +44,28 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  // Import = the other half of Export: pick a backup JSON, confirm what it
+  // holds, and REPLACE the current state with it (server keeps a pre-restore
+  // safety snapshot).
+  const fileInput = useRef(null);
+
+  const importData = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!file) return;
+    try {
+      const backup = JSON.parse(await file.text());
+      const n = (k) => (Array.isArray(backup[k]) ? backup[k].length : 0);
+      const summary = `${n("targets")} targets, ${n("milestones")} milestones, ${n("subtasks")} tasks, ${n("habits")} habits`;
+      if (!confirm(`Replace ALL current data with "${file.name}"?\n\nBackup contains: ${summary}.`))
+        return;
+      await api.restore(backup);
+      refresh();
+    } catch (err) {
+      alert(`Import failed: ${err.message}`);
+    }
+  };
+
   return (
     <div className="shell">
       <header className="topbar">
@@ -78,6 +100,21 @@ export default function App() {
             >
               ⬇ Export
             </button>
+            <button
+              className="btn-icon"
+              title="Replace all data with a previously exported backup"
+              onClick={() => fileInput.current?.click()}
+              disabled={!data}
+            >
+              ⬆ Import
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="application/json,.json"
+              style={{ display: "none" }}
+              onChange={importData}
+            />
           </div>
         </div>
       </header>
