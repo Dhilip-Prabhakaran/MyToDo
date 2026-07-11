@@ -2252,53 +2252,90 @@ li.done .task-title {
 }
 
 /* ---------- Habits page ---------- */
-.habit-report {
-  padding: 14px 0;
-  border-top: 1px solid #f0ede4;
+.habits-toolbar {
+  margin-bottom: 16px;
 }
 
-.habit-report:first-of-type {
-  border-top: none;
-  padding-top: 4px;
+.habit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 16px;
 }
 
-.habit-report-head {
+.habit-card {
+  margin-bottom: 0;
+  border-top: 3px solid var(--habit-color, var(--border));
+}
+
+.habit-card.done-today {
+  background: linear-gradient(
+    color-mix(in srgb, var(--habit-color) 4%, var(--surface)),
+    var(--surface)
+  );
+}
+
+.habit-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
-.habit-report-head h4 {
-  font-size: 14px;
-  font-weight: 700;
+.habit-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
   min-width: 0;
+  cursor: pointer;
+}
+
+.habit-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.habit-name {
+  font-weight: 700;
+  font-size: 14.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bar-chart.small {
-  height: 46px;
-  gap: 4px;
+.done-today .habit-name {
+  color: var(--ink-soft);
 }
 
-.bar-chart.small .bar-track {
-  max-width: 16px;
-}
-
-.habit-heatmap {
+.habit-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 10px;
+  gap: 6px;
+  margin: 8px 0 14px;
 }
 
-.heatmap-dot {
-  width: 10px;
-  height: 10px;
+/* Monday-aligned weekly heatmap: columns = weeks, rows = weekdays. */
+.hm {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column;
+  grid-auto-columns: 11px;
+  gap: 3px;
+  justify-content: start;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.hm-cell {
+  width: 11px;
+  height: 11px;
   border-radius: 3px;
   background: #eae7dc;
-  flex-shrink: 0;
+}
+
+.hm-cell.future {
+  visibility: hidden;
 }
