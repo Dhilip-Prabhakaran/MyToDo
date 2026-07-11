@@ -186,12 +186,29 @@ function MilestoneFields({ form, setForm }) {
   );
 }
 
+// Three scheduling modes, mirroring the Plan-tasks calendar:
+//  - single : one task on one day
+//  - span   : ONE task covering date..endDate (due on the last day)
+//  - daily  : a separate task on each day (repeat count)
 function SubtaskForm({ milestone, onSaved }) {
-  const [form, setForm] = useState({ title: "", date: todayStr(), repeatDays: 1 });
+  const [form, setForm] = useState({
+    title: "",
+    date: todayStr(),
+    endDate: "",
+    repeatDays: 1,
+    mode: "single",
+  });
 
   const submit = async (e) => {
     e.preventDefault();
-    await api.addSubtask(milestone.id, form);
+    const payload = { title: form.title, date: form.date };
+    if (form.mode === "span") {
+      payload.endDate = form.endDate;
+      payload.mode = "single"; // server: endDate + mode "single" = one spanning task
+    } else if (form.mode === "daily") {
+      payload.repeatDays = form.repeatDays;
+    }
+    await api.addSubtask(milestone.id, payload);
     setForm({ ...form, title: "" });
     onSaved();
   };
@@ -204,23 +221,45 @@ function SubtaskForm({ milestone, onSaved }) {
         onChange={(e) => setForm({ ...form, title: e.target.value })}
         required
       />
+      <select
+        value={form.mode}
+        onChange={(e) => setForm({ ...form, mode: e.target.value })}
+        title="How to schedule this task"
+      >
+        <option value="single">One day</option>
+        <option value="span">Multi-day (one task)</option>
+        <option value="daily">Repeat daily</option>
+      </select>
       <input
         type="date"
+        title={form.mode === "span" ? "Start date" : "Date"}
         value={form.date}
         onChange={(e) => setForm({ ...form, date: e.target.value })}
         required
       />
-      <label className="repeat-label">
-        repeat
+      {form.mode === "span" && (
         <input
-          type="number"
-          min="1"
-          max="90"
-          value={form.repeatDays}
-          onChange={(e) => setForm({ ...form, repeatDays: e.target.value })}
+          type="date"
+          title="End date (task is due this day)"
+          value={form.endDate}
+          min={form.date}
+          onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+          required
         />
-        day(s)
-      </label>
+      )}
+      {form.mode === "daily" && (
+        <label className="repeat-label">
+          repeat
+          <input
+            type="number"
+            min="1"
+            max="90"
+            value={form.repeatDays}
+            onChange={(e) => setForm({ ...form, repeatDays: e.target.value })}
+          />
+          day(s)
+        </label>
+      )}
       <button type="submit" className="btn btn-small">
         Add
       </button>
