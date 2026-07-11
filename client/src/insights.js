@@ -65,26 +65,61 @@ export function taskDateLabel(task) {
   return task.endDate ? `${fmtDate(task.date)}–${fmtDate(task.endDate)}` : fmtDate(task.date);
 }
 
-// Milestone progress vs. where it *should* be by today ("on time" insight).
+// Milestone health. "Behind" is driven by tasks past their OWN due date —
+// not by elapsed time — so a spanning task still inside its window (endDate in
+// the future) never marks a milestone behind before it is actually late.
 export function milestoneStats(milestone, subtasks) {
   const tasks = subtasks.filter((s) => s.milestoneId === milestone.id);
   const done = tasks.filter((s) => s.done).length;
   const completion = pct(done, tasks.length);
 
   const today = todayStr();
-  const totalDays = Math.max(daysBetween(milestone.startDate, milestone.dueDate), 1);
-  const elapsed = Math.min(Math.max(daysBetween(milestone.startDate, today), 0), totalDays);
-  const expected = Math.round((elapsed / totalDays) * 100);
   const daysLeft = daysBetween(today, milestone.dueDate);
+  const overdue = tasks.filter((s) => !s.done && (s.endDate || s.date) < today).length;
 
   let status;
   if (tasks.length > 0 && done === tasks.length) status = "done";
   else if (daysLeft < 0) status = "overdue";
   else if (tasks.length === 0) status = "empty";
-  else if (completion >= expected) status = "on-track";
-  else status = "behind";
+  else if (overdue > 0) status = "behind";
+  else status = "on-track";
 
-  return { tasks, done, total: tasks.length, completion, expected, daysLeft, status };
+  return { tasks, done, total: tasks.length, completion, daysLeft, overdue, status };
+}
+
+// The app-day (06:00 boundary) a completion timestamp falls on. Lets a row that
+// was just ticked stay visible (struck through) until the day rolls over, instead
+// of vanishing on the click.
+export function dayOf(iso) {
+  return iso
+    ? new Date(new Date(iso).getTime() - DAY_START_HOUR * 3600000).toLocaleDateString("en-CA")
+    : null;
+}
+
+// Tasks whose due date (endDate for a span, else date) is already past and are
+// still unfinished — the only things that genuinely "need attention". A task
+// completed today lingers (struck through) until tomorrow, matching the daily list.
+export function overdueTasks(subtasks) {
+  const today = todayStr();
+  return subtasks
+    .filter((s) => (s.endDate || s.date) < today && (!s.done || dayOf(s.doneAt) === today))
+    .sort((a, b) => (a.endDate || a.date).localeCompare(b.endDate || b.date));
+}
+
+// Spanning tasks currently in progress — started, but not yet at their due day.
+// (On the due day itself they appear in the normal "today" list via dueStats.)
+// A task completed today lingers until tomorrow rather than vanishing on the tick.
+export function inProgressSpanning(subtasks) {
+  const today = todayStr();
+  return subtasks
+    .filter(
+      (s) =>
+        s.endDate &&
+        s.date <= today &&
+        today < s.endDate &&
+        (!s.done || dayOf(s.doneAt) === today)
+    )
+    .sort((a, b) => a.endDate.localeCompare(b.endDate));
 }
 
 // Overall target progress across all of its milestones' subtasks.

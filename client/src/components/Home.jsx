@@ -6,9 +6,11 @@ import {
   streak,
   fmtDate,
   addDays,
+  daysBetween,
   lastNDays,
   targetStats,
-  milestoneStats,
+  overdueTasks,
+  inProgressSpanning,
   taskDateLabel,
 } from "../insights.js";
 import ProgressRing from "./ProgressRing.jsx";
@@ -125,12 +127,18 @@ export default function Home({ data, refresh }) {
     groups[key].milestoneTasks.push({ task, milestone });
   }
 
-  // Milestones that are behind pace or overdue — surfaced here so it doesn't
-  // take a trip to the Targets page to notice a plan slipping.
-  const paceAlerts = data.milestones
-    .map((m) => ({ milestone: m, target: targetById[m.targetId], stats: milestoneStats(m, data.subtasks) }))
-    .filter(({ stats: s }) => s.status === "behind" || s.status === "overdue")
-    .sort((a, b) => a.stats.daysLeft - b.stats.daysLeft);
+  const withContext = (task) => {
+    const milestone = milestoneById[task.milestoneId];
+    return { task, milestone, target: milestone ? targetById[milestone.targetId] : null };
+  };
+
+  // Only genuinely late work needs attention: tasks past their own due date and
+  // still unfinished. A spanning task inside its window is NOT late, so it never
+  // lands here — it shows in the "In progress" section instead.
+  const overdue = overdueTasks(data.subtasks).map(withContext);
+
+  // Multi-day tasks currently underway (started, not yet at their due day).
+  const spanningNow = inProgressSpanning(data.subtasks).map(withContext);
 
   // Pinned "today's focus" tasks (starred), shown at the top regardless of target.
   const focusTasks = stats.tasks
@@ -197,19 +205,22 @@ export default function Home({ data, refresh }) {
           </div>
         </section>
 
-        {paceAlerts.length > 0 && (
+        {overdue.length > 0 && (
           <section className="card pace-alert">
             <div className="card-head">
               <h3>⚠ Needs attention</h3>
             </div>
-            <ul className="pace-list">
-              {paceAlerts.map(({ milestone, target, stats: mStats }) => (
-                <li key={milestone.id}>
-                  <span className="cal-dot" style={{ background: target?.color || "#9b968a" }} />
-                  <span className="pace-title">{milestone.title}</span>
-                  <span className="task-milestone">{target?.title || "—"}</span>
-                  <span className={`chip ${mStats.status === "overdue" ? "chip-red" : "chip-gold"}`}>
-                    {mStats.status === "overdue" ? `${Math.abs(mStats.daysLeft)}d overdue` : "Behind pace"}
+            <ul className="task-list">
+              {overdue.map(({ task, milestone, target }) => (
+                <li key={task.id} className={task.done ? "done" : ""}>
+                  <label>
+                    <input type="checkbox" checked={task.done} onChange={() => toggle(task)} />
+                    <span className="cal-dot" style={{ background: target?.color || "#9b968a" }} />
+                    <span className="task-title">{task.title}</span>
+                  </label>
+                  {milestone && <span className="task-milestone">{milestone.title}</span>}
+                  <span className="chip chip-red">
+                    {daysBetween(task.endDate || task.date, today)}d overdue
                   </span>
                 </li>
               ))}
@@ -281,6 +292,35 @@ export default function Home({ data, refresh }) {
             </ul>
           </section>
         ))}
+
+        {spanningNow.length > 0 && (
+          <section className="card inprogress-card">
+            <div className="card-head">
+              <h3>🕒 In progress</h3>
+              <p className="card-sub">Multi-day tasks underway — due on their last day.</p>
+            </div>
+            <ul className="task-list">
+              {spanningNow.map(({ task, milestone, target }) => (
+                <li key={task.id} className={task.done ? "done" : ""}>
+                  <label>
+                    <input type="checkbox" checked={task.done} onChange={() => toggle(task)} />
+                    <span className="cal-dot" style={{ background: target?.color || "#9b968a" }} />
+                    <span className="task-title">{task.title}</span>
+                  </label>
+                  <span className="task-date">{taskDateLabel(task)}</span>
+                  {milestone && <span className="task-milestone">{milestone.title}</span>}
+                  <button
+                    className="btn-icon"
+                    title="Edit task"
+                    onClick={() => setEditingTask(task)}
+                  >
+                    Edit
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {data.targets.length === 0 && (
           <section className="card empty-state">
