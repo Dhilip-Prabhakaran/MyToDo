@@ -23,6 +23,42 @@ import QuickAdd from "./QuickAdd.jsx";
 // capped low on purpose, otherwise everything ends up pinned and nothing does.
 const FOCUS_LIMIT = 3;
 
+// Manual progress entry for a multi-day task: drag to a %, saved on release.
+// 0% reads as "Started" — the task is underway but nothing banked yet.
+function SpanProgress({ task, refresh }) {
+  const [val, setVal] = useState(task.progress ?? 0);
+
+  useEffect(() => {
+    setVal(task.progress ?? 0); // stay in sync when edited elsewhere
+  }, [task.progress]);
+
+  const commit = async () => {
+    if ((task.progress ?? 0) !== val) {
+      await api.updateSubtask(task.id, { progress: val });
+      refresh();
+    }
+  };
+
+  return (
+    <span className="span-progress">
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        value={val}
+        title={`Progress: ${val}%`}
+        onChange={(e) => setVal(+e.target.value)}
+        onPointerUp={commit}
+        onBlur={commit}
+      />
+      <span className={`chip ${val > 0 ? "chip-gold" : "chip-grey"}`}>
+        {val === 0 ? "Started" : `${val}%`}
+      </span>
+    </span>
+  );
+}
+
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTHS = [
   "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -312,6 +348,7 @@ export default function Home({ data, refresh }) {
                   </label>
                   <span className="task-date">{taskDateLabel(task)}</span>
                   {milestone && <span className="task-milestone">{milestone.title}</span>}
+                  {!task.done && <SpanProgress task={task} refresh={refresh} />}
                   <button
                     className="btn-icon"
                     title="Edit task"

@@ -178,7 +178,9 @@ export function habitWeekProgress(habit, habitLogs) {
   const start = addDays(end, -6);
   let hits = 0;
   for (let d = start; d <= end; d = addDays(d, 1)) if (done.has(d)) hits++;
-  return { hits, target: habit.timesPerWeek };
+  // Daily habits always aim for 7/7 — ignore a stale timesPerWeek left over
+  // from a frequency switch.
+  return { hits, target: habit.frequency === "weekly" ? habit.timesPerWeek : 7 };
 }
 
 // Daily habits: consecutive days done, with ONE grace skip allowed — it recharges

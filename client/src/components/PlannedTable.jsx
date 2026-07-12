@@ -59,7 +59,7 @@ export default function PlannedTable({ data, refresh, title = "Planned tasks" })
     if (task.done) return { text: "Done", cls: "chip-green" };
     if ((task.endDate || task.date) < today) return { text: "Overdue", cls: "chip-red" };
     if (task.date <= today && today <= (task.endDate || task.date))
-      return { text: "In progress", cls: "chip-gold" };
+      return { text: task.progress ? `In progress · ${task.progress}%` : "In progress", cls: "chip-gold" };
     return { text: "Planned", cls: "chip-grey" };
   };
 

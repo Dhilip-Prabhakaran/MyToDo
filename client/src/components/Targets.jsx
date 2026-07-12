@@ -330,6 +330,9 @@ function MilestoneRow({ milestone, subtasks, color, refresh, dnd }) {
                         <span className="task-title">{task.title}</span>
                       </label>
                       <span className="task-date">{taskDateLabel(task)}</span>
+                      {task.endDate && !task.done && task.progress > 0 && (
+                        <span className="chip chip-gold">{task.progress}%</span>
+                      )}
                       <span className="row-actions">
                         <button
                           className="btn-icon"

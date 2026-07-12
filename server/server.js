@@ -172,14 +172,19 @@ app.post("/api/milestones/:milestoneId/subtasks", (req, res) => {
 app.put("/api/subtasks/:id", (req, res) => {
   const subtask = state.subtasks.find((s) => s.id === req.params.id);
   if (!subtask) return res.status(404).json({ error: "subtask not found" });
-  const { title, date, endDate, done, priority } = req.body;
+  const { title, date, endDate, done, priority, progress } = req.body;
   if (title !== undefined) subtask.title = title;
   if (date !== undefined) subtask.date = date;
   if (endDate !== undefined) subtask.endDate = endDate || null;
   if (priority !== undefined) subtask.priority = !!priority;
+  // Manual progress for multi-day (spanning) tasks: 0–100.
+  if (progress !== undefined) {
+    subtask.progress = Math.min(Math.max(parseInt(progress, 10) || 0, 0), 100);
+  }
   if (done !== undefined) {
     subtask.done = !!done;
     subtask.doneAt = subtask.done ? now() : null;
+    if (subtask.done) subtask.progress = 100; // completing implies full progress
   }
   persist();
   res.json(subtask);

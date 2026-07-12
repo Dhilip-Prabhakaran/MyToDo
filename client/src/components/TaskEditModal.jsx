@@ -8,6 +8,7 @@ export default function TaskEditModal({ task, onClose, refresh }) {
     title: task.title,
     date: task.date,
     endDate: task.endDate || "",
+    progress: task.progress ?? 0,
   });
   const [saving, setSaving] = useState(false);
 
@@ -24,6 +25,7 @@ export default function TaskEditModal({ task, onClose, refresh }) {
       title: form.title,
       date: form.date,
       endDate: form.endDate || null,
+      ...(form.endDate && { progress: form.progress }),
     });
     setSaving(false);
     refresh();
@@ -72,6 +74,19 @@ export default function TaskEditModal({ task, onClose, refresh }) {
               />
             </label>
           </div>
+          {form.endDate && (
+            <label className="progress-field">
+              Progress · {form.progress === 0 ? "Started" : `${form.progress}%`}
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={form.progress}
+                onChange={(e) => setForm({ ...form, progress: +e.target.value })}
+              />
+            </label>
+          )}
           <div className="form-actions">
             <button type="submit" className="btn" disabled={saving}>
               {saving ? "Saving…" : "Save"}

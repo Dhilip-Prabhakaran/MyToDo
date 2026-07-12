@@ -2215,6 +2215,39 @@ li.done .task-title {
   color: var(--cyan);
 }
 
+/* Inline progress entry for a multi-day task (slider + status chip). */
+.span-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.span-progress input[type="range"] {
+  width: 90px;
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+
+.span-progress .chip {
+  min-width: 52px;
+  text-align: center;
+}
+
+.progress-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.progress-field input[type="range"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* ---------- today's focus (Home) ---------- */
 .focus-card {
   border-left: 3px solid var(--gold);
