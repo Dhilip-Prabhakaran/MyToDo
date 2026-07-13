@@ -2053,6 +2053,7 @@ li.done .task-title {
 
   .tabs {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .tab {
@@ -2439,4 +2440,184 @@ li.done .task-title {
   font-size: 11.5px;
   color: var(--ink-faint);
   text-align: right;
+}
+
+/* ---------- Reports page ---------- */
+.rp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.rp-grid .card {
+  margin-bottom: 0;
+}
+
+/* Cards slide up as the page opens, one after another. */
+.rp-card {
+  animation: rp-in 0.45s ease-out both;
+}
+
+.rp-card:nth-child(2),
+.rp-grid:nth-of-type(1) .rp-card {
+  animation-delay: 0.1s;
+}
+
+.rp-grid:nth-of-type(2) .rp-card {
+  animation-delay: 0.2s;
+}
+
+@keyframes rp-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Trend chart: the line draws itself, dots pop in along it. */
+.rp-trend-wrap {
+  min-width: 0;
+}
+
+.rp-trend {
+  width: 100%;
+  height: 170px;
+  display: block;
+}
+
+.rp-gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+}
+
+.rp-trend-area {
+  fill: var(--accent-soft);
+  opacity: 0;
+  animation: rp-fade 0.8s 0.9s ease-out forwards;
+}
+
+.rp-trend-line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: rp-draw 1.2s 0.15s ease-out forwards;
+}
+
+.rp-trend-dot {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0;
+  animation: rp-fade 0.3s ease-out forwards;
+}
+
+@keyframes rp-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rp-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+.rp-trend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-top: 4px;
+}
+
+/* Bars grow up from the baseline. */
+.rp-bars {
+  gap: 3px;
+}
+
+.rp-grow {
+  transform-origin: bottom;
+  animation: rp-grow 0.6s ease-out both;
+}
+
+@keyframes rp-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* Horizontal progress rows (targets, habits). */
+.rp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rp-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid #f0ede4;
+  min-width: 0;
+}
+
+.rp-list li:last-child {
+  border-bottom: none;
+}
+
+.rp-list-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-list .mini-bar {
+  width: 130px;
+}
+
+.rp-list-num {
+  font-size: 12.5px;
+  font-weight: 800;
+  min-width: 40px;
+  text-align: right;
+}
+
+.rp-sweep {
+  transform-origin: left;
+  animation: rp-sweep 0.8s ease-out both;
+}
+
+@keyframes rp-sweep {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Honour users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .rp-card,
+  .rp-grow,
+  .rp-sweep,
+  .rp-trend-line,
+  .rp-trend-area,
+  .rp-trend-dot {
+    animation: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
 }

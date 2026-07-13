@@ -5,12 +5,14 @@ import Home from "./components/Home.jsx";
 import TargetsPage from "./components/TargetsPage.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
 import HabitsPage from "./components/HabitsPage.jsx";
+import ReportsPage from "./components/ReportsPage.jsx";
 import Templates from "./components/Templates.jsx";
 
 const TABS = [
   { id: "home", label: "Home" },
   { id: "targets", label: "Targets" },
   { id: "habits", label: "Habits" },
+  { id: "reports", label: "Reports" },
   { id: "history", label: "History" },
   { id: "templates", label: "Templates" },
 ];
@@ -129,6 +131,7 @@ export default function App() {
         {data && tab === "home" && <Home data={data} refresh={refresh} />}
         {data && tab === "targets" && <TargetsPage data={data} refresh={refresh} />}
         {data && tab === "habits" && <HabitsPage data={data} refresh={refresh} />}
+        {data && tab === "reports" && <ReportsPage data={data} />}
         {data && tab === "history" && <HistoryPage data={data} refresh={refresh} />}
         {data && tab === "templates" && <Templates data={data} refresh={refresh} />}
       </main>
