@@ -2351,24 +2351,92 @@ li.done .task-title {
 }
 
 /* Monday-aligned weekly heatmap: columns = weeks, rows = weekdays. */
-.hm {
+/* Compact month calendar inside a habit card. */
+.habit-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.habit-cal-month {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.habit-cal-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.habit-cal-nav .btn-icon {
+  padding: 2px 8px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.habit-cal-grid {
   display: grid;
-  grid-template-rows: repeat(7, 11px);
-  grid-auto-flow: column;
-  grid-auto-columns: 11px;
-  gap: 3px;
-  justify-content: start;
-  overflow-x: auto;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.habit-cal-dow {
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-faint);
   padding-bottom: 2px;
 }
 
-.hm-cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  background: #eae7dc;
+.habit-cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 
-.hm-cell.future {
-  visibility: hidden;
+.habit-cal-cell:hover:not(:disabled) {
+  border-color: var(--habit-color, var(--accent));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.habit-cal-cell.hit {
+  color: #fff;
+}
+
+.habit-cal-cell.today {
+  box-shadow: 0 0 0 2px var(--habit-color, var(--accent));
+}
+
+.habit-cal-cell.outside {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-faint);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.habit-cal-cell.future {
+  color: var(--ink-faint);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.habit-cal-foot {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-align: right;
 }

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { api } from "../api.js";
 import {
   todayStr,
-  addDays,
   fmtDate,
   isHabitDoneOn,
   habitStreak,
@@ -136,34 +135,107 @@ function HabitEditForm({ habit, onSaved, onCancel }) {
   );
 }
 
-// Monday-aligned, GitHub-style history: one column per week (oldest left),
-// one row per weekday. Future cells are hidden to keep the grid aligned.
-function Heatmap({ habit, habitLogs, weeks = 12 }) {
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DOW = ["M", "T", "W", "T", "F", "S", "S"];
+
+// 6 rows x 7 cols starting Monday, padded with prev/next-month days.
+function buildMonthGrid(year, month) {
+  const first = new Date(year, month, 1);
+  const mondayOffset = (first.getDay() + 6) % 7;
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(year, month, 1 - mondayOffset + i);
+    cells.push({
+      date: d.toLocaleDateString("en-CA"),
+      day: d.getDate(),
+      outside: d.getMonth() !== month,
+    });
+  }
+  return cells;
+}
+
+// Month-at-a-glance history for one habit, laid out like the planning calendar.
+// Done days are filled in the habit's colour; click any past/today cell to
+// toggle it — handy for back-filling a day you forgot. Navigate months freely.
+function MonthCalendar({ habit, habitLogs, refresh }) {
   const today = todayStr();
+  const [y0, m0] = today.split("-").map(Number); // m0 is 1-based
+  const [view, setView] = useState({ year: y0, month: m0 - 1 });
+
   const done = new Set(
     habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date)
   );
-  const mondayOffset = (new Date(today + "T00:00:00").getDay() + 6) % 7; // Mon = 0
-  const thisMonday = addDays(today, -mondayOffset);
+  const cells = buildMonthGrid(view.year, view.month);
+  const canNext = view.year < y0 || (view.year === y0 && view.month < m0 - 1);
+  const monthDone = cells.filter((c) => !c.outside && c.date <= today && done.has(c.date)).length;
 
-  const cells = [];
-  for (let w = weeks - 1; w >= 0; w--) {
-    for (let r = 0; r < 7; r++) {
-      const date = addDays(thisMonday, -w * 7 + r);
-      cells.push({ date, future: date > today, hit: done.has(date) });
-    }
-  }
+  const step = (delta) => {
+    const d = new Date(view.year, view.month + delta, 1);
+    setView({ year: d.getFullYear(), month: d.getMonth() });
+  };
+
+  const toggle = async (date) => {
+    await api.logHabit(habit.id, date, !done.has(date));
+    refresh();
+  };
 
   return (
-    <div className="hm" title={`Last ${weeks} weeks`}>
-      {cells.map((c) => (
-        <span
-          key={c.date}
-          className={`hm-cell ${c.future ? "future" : ""}`}
-          style={c.hit ? { background: habit.color } : undefined}
-          title={c.future ? undefined : `${fmtDate(c.date)} — ${c.hit ? "done" : "not done"}`}
-        />
-      ))}
+    <div className="habit-cal">
+      <div className="habit-cal-head">
+        <span className="habit-cal-month">
+          {MONTHS[view.month]} {view.year}
+        </span>
+        <span className="habit-cal-nav">
+          <button type="button" className="btn-icon" onClick={() => step(-1)} title="Previous month">
+            ‹
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() => step(1)}
+            disabled={!canNext}
+            title="Next month"
+          >
+            ›
+          </button>
+        </span>
+      </div>
+      <div className="habit-cal-grid">
+        {DOW.map((d, i) => (
+          <span key={i} className="habit-cal-dow">
+            {d}
+          </span>
+        ))}
+        {cells.map((c) => {
+          const future = c.date > today;
+          const hit = done.has(c.date);
+          const disabled = c.outside || future;
+          return (
+            <button
+              key={c.date}
+              type="button"
+              disabled={disabled}
+              className={[
+                "habit-cal-cell",
+                c.outside ? "outside" : "",
+                future ? "future" : "",
+                hit ? "hit" : "",
+                c.date === today ? "today" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={hit ? { background: habit.color, borderColor: habit.color } : undefined}
+              title={disabled ? undefined : `${fmtDate(c.date)} — ${hit ? "done" : "not done"}`}
+              onClick={() => !disabled && toggle(c.date)}
+            >
+              {c.day}
+            </button>
+          );
+        })}
+      </div>
+      <p className="habit-cal-foot">
+        {monthDone} {monthDone === 1 ? "day" : "days"} done this month
+      </p>
     </div>
   );
 }
@@ -242,7 +314,7 @@ function HabitCard({ habit, habitLogs, refresh }) {
         <span className="chip chip-grey">30d · {last30}</span>
       </div>
 
-      <Heatmap habit={habit} habitLogs={habitLogs} />
+      <MonthCalendar habit={habit} habitLogs={habitLogs} refresh={refresh} />
     </section>
   );
 }
