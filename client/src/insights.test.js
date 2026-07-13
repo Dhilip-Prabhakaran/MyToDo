@@ -186,13 +186,13 @@ describe("milestoneStats — behind means overdue tasks, not elapsed time", () =
   });
 });
 
-describe("streak — consecutive fully-completed days", () => {
-  it("counts back from today when today is complete", () => {
+describe("streak — productive days, with span credit and grace", () => {
+  it("counts consecutive fully-completed days", () => {
     const tasks = [
       task({ date: "2026-07-11", done: true }),
       task({ date: "2026-07-10", done: true }),
       task({ date: "2026-07-09", done: true }),
-      task({ date: "2026-07-08" }), // breaks here
+      // days 8 & 7 bare (grace), day 6 bare → break; count stays 3
     ];
     expect(streak(tasks)).toBe(3);
   });
@@ -204,6 +204,36 @@ describe("streak — consecutive fully-completed days", () => {
       task({ date: "2026-07-09", done: true }),
     ];
     expect(streak(tasks)).toBe(2);
+  });
+
+  it("credits days where a multi-day task is in progress, though nothing is due", () => {
+    const tasks = [
+      task({ date: "2026-07-11", done: true }), // today: daily task done
+      task({ date: "2026-07-08", endDate: "2026-07-12" }), // span covers 8..12, due on 12
+    ];
+    // 11 good (daily), 10/9/8 good (span active), 7/6 bare (grace), 5 → break
+    expect(streak(tasks)).toBe(4);
+  });
+
+  it("tolerates two busy (unfinished) days, then keeps counting", () => {
+    const tasks = [
+      task({ date: "2026-07-11", done: true }),
+      task({ date: "2026-07-10" }), // busy day 1 (grace)
+      task({ date: "2026-07-09" }), // busy day 2 (grace)
+      task({ date: "2026-07-08", done: true }),
+    ];
+    expect(streak(tasks)).toBe(2); // days 11 and 8; the two misses don't add
+  });
+
+  it("breaks when a third busy day exhausts the grace budget", () => {
+    const tasks = [
+      task({ date: "2026-07-11", done: true }),
+      task({ date: "2026-07-10" }),
+      task({ date: "2026-07-09" }),
+      task({ date: "2026-07-08" }), // third miss → break before reaching day 7
+      task({ date: "2026-07-07", done: true }),
+    ];
+    expect(streak(tasks)).toBe(1);
   });
 });
 

@@ -150,16 +150,50 @@ export function lastNDays(subtasks, n = 14) {
   return days;
 }
 
-// Consecutive fully-completed days ending today (or yesterday if today isn't over).
+// Day-streak grace: how many "off" days (a missed task or a bare day) the streak
+// tolerates before it breaks, and how many good days refill that budget — so one
+// or two busy days don't wipe your momentum. Mirrors the habit-streak grace.
+const STREAK_GRACE = 2;
+const STREAK_RECHARGE = 7;
+
+// Classify a single day for the streak:
+//   "good"  — everything DUE that day was completed, OR a multi-day task was in
+//             progress that day (you were working on it, even if nothing was due).
+//   "miss"  — something was due (a daily task, or a span on its end date) and was
+//             left unfinished.
+//   "empty" — nothing due and no span in progress (a bare day).
+function classifyDay(subtasks, date) {
+  const { total, done } = dueStats(subtasks, date);
+  if (total > 0) return done === total ? "good" : "miss";
+  const activeSpan = subtasks.some((s) => s.endDate && s.date <= date && date <= s.endDate);
+  return activeSpan ? "good" : "empty";
+}
+
+// Consecutive productive days ending today. A day counts when you finish what's
+// due OR keep a multi-day task moving; it breaks on a genuine miss (a due task or
+// a span's end date left unfinished) — but tolerates up to STREAK_GRACE off days.
 export function streak(subtasks) {
   let count = 0;
   let date = todayStr();
-  const todayDone = dueStats(subtasks, date);
-  if (todayDone.total === 0 || todayDone.done < todayDone.total) date = addDays(date, -1);
-  for (;;) {
-    const { total, done } = dueStats(subtasks, date);
-    if (total === 0 || done < total) break;
-    count++;
+  // Don't penalise today while it may still be in progress.
+  if (classifyDay(subtasks, date) !== "good") date = addDays(date, -1);
+
+  let grace = STREAK_GRACE;
+  let goodRun = 0;
+  for (let guard = 0; guard < 366; guard++) {
+    const kind = classifyDay(subtasks, date);
+    if (kind === "good") {
+      count++;
+      if (++goodRun >= STREAK_RECHARGE) {
+        grace = STREAK_GRACE;
+        goodRun = 0;
+      }
+    } else if (grace > 0) {
+      grace--;
+      goodRun = 0;
+    } else {
+      break;
+    }
     date = addDays(date, -1);
   }
   return count;
