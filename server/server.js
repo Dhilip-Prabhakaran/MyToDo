@@ -254,44 +254,11 @@ app.put("/api/habits/:id/log", (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- working-document versions (Templates page) ----------
-// One living document per template, stored as immutable full-text snapshots:
-// saving always APPENDS the next version (v1, v2, …) — history is never edited.
-// Sections are per-section plain text keyed by the template's section keys.
-app.post("/api/docs/:templateId/versions", (req, res) => {
-  const { sections, note = "" } = req.body;
-  if (!sections || typeof sections !== "object" || Array.isArray(sections)) {
-    return res.status(400).json({ error: "sections object is required" });
-  }
-  const templateId = req.params.templateId;
-  const latest = state.docVersions
-    .filter((v) => v.templateId === templateId)
-    .reduce((m, v) => Math.max(m, v.version), 0);
-  const version = {
-    id: id(),
-    templateId,
-    version: latest + 1,
-    note: String(note).slice(0, 200),
-    sections,
-    createdAt: now(),
-  };
-  state.docVersions.push(version);
-  persist();
-  res.status(201).json(version);
-});
-
-// Escape hatch for a mistaken save — the UI only offers this on the newest version.
-app.delete("/api/doc-versions/:id", (req, res) => {
-  state.docVersions = state.docVersions.filter((v) => v.id !== req.params.id);
-  persist();
-  res.json({ ok: true });
-});
-
 // ---------- restore from an exported backup ----------
 // Body is the JSON produced by the Export button (or a rolling snapshot from
 // server/data/backups). Replaces the whole state; the outgoing state is first
 // written as a labelled safety snapshot so a mistaken import is recoverable.
-const STATE_KEYS = ["targets", "milestones", "subtasks", "habits", "habitLogs", "docVersions"];
+const STATE_KEYS = ["targets", "milestones", "subtasks", "habits", "habitLogs"];
 
 app.post("/api/restore", (req, res) => {
   const body = req.body;

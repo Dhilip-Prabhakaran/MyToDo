@@ -33,8 +33,5 @@ export const api = {
   deleteHabit: (id) => req("DELETE", `/api/habits/${id}`),
   logHabit: (id, date, done) => req("PUT", `/api/habits/${id}/log`, { date, done }),
 
-  addDocVersion: (templateId, data) => req("POST", `/api/docs/${templateId}/versions`, data),
-  deleteDocVersion: (id) => req("DELETE", `/api/doc-versions/${id}`),
-
   restore: (backup) => req("POST", "/api/restore", backup),
 };
