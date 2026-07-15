@@ -2,15 +2,27 @@ import { useState } from "react";
 import { TEMPLATES, templateById } from "../templates/defs.js";
 import TemplateViewer from "./TemplateViewer.jsx";
 
-// Learning library: browse BA templates and read each one with its complete
-// worked example. New templates are added in src/templates/defs.js — see the
-// "how to add" recipe at the top of that file.
-export default function Templates() {
+// Learning library: browse BA templates; each opens with YOUR working
+// document (versioned) alongside the guidance and worked example. New
+// templates are added in src/templates/defs.js — see the recipe there.
+export default function Templates({ data, refresh }) {
   const [openId, setOpenId] = useState(null);
+
+  const latestVersionOf = (templateId) =>
+    (data?.docVersions || [])
+      .filter((v) => v.templateId === templateId)
+      .reduce((m, v) => Math.max(m, v.version), 0);
 
   const open = templateById(openId);
   if (open && open.status === "ready") {
-    return <TemplateViewer template={open} onBack={() => setOpenId(null)} />;
+    return (
+      <TemplateViewer
+        template={open}
+        onBack={() => setOpenId(null)}
+        data={data}
+        refresh={refresh}
+      />
+    );
   }
 
   return (
@@ -32,6 +44,9 @@ export default function Templates() {
             <section key={t.id} className={`card tpl-card ${ready ? "" : "tpl-planned"}`}>
               <div className="tpl-card-top">
                 <span className="tpl-code">{t.code}</span>
+                {ready && latestVersionOf(t.id) > 0 && (
+                  <span className="chip chip-gold">my doc · v{latestVersionOf(t.id)}</span>
+                )}
                 <span className={`chip ${ready ? "chip-green" : "chip-grey"}`}>
                   {ready ? "Ready" : "Planned"}
                 </span>

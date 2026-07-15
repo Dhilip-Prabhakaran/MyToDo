@@ -8,7 +8,14 @@ import { fileURLToPath } from "url";
 //   - JSON file  otherwise                → zero-setup local development
 // The whole app state is a single record, so both backends stay trivial.
 
-const emptyState = { targets: [], milestones: [], subtasks: [], habits: [], habitLogs: [] };
+const emptyState = {
+  targets: [],
+  milestones: [],
+  subtasks: [],
+  habits: [],
+  habitLogs: [],
+  docVersions: [],
+};
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB = process.env.MONGODB_DB || "mytodo";
 const DOC_ID = "app-state";
