@@ -622,6 +622,20 @@ h4 {
   color: var(--accent);
 }
 
+/* Notes that follow an example (resolved contradictions / overlaps). */
+.doc-notes {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doc-notes .doc-field {
+  margin-bottom: 0;
+}
+
 .doc-howto {
   margin-top: 14px;
   font-size: 13px;

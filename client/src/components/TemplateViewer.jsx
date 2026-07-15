@@ -80,6 +80,21 @@ function ExampleCards({ cards }) {
   );
 }
 
+// Follow-up notes under an example — the reasoning that resolved a
+// contradiction or overlap. The learning record, not the artifact itself.
+function ExampleNotes({ notes }) {
+  return (
+    <div className="doc-notes">
+      {notes.map((n, i) => (
+        <div key={i} className={`doc-field ${n.highlight ? "highlight" : ""}`}>
+          <span className="doc-field-label">{n.label}</span>
+          <p className="doc-field-text">{n.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // One section's worked example — table, structured cards, or prose,
 // whichever the section supplies. Falls back to the blank-copy placeholder.
 function SectionExample({ section }) {
@@ -94,6 +109,7 @@ function SectionExample({ section }) {
         ) : (
           <div className="doc-body">{section.example}</div>
         )}
+        {section.exampleNotes && <ExampleNotes notes={section.exampleNotes} />}
       </>
     );
   }
