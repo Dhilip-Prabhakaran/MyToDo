@@ -2635,3 +2635,169 @@ li.done .task-title {
     stroke-dashoffset: 0;
   }
 }
+
+/* ============================================================
+   Phone layout (≤600px)
+   Kept at the end of the file on purpose: the feature styles
+   above (habits, reports, docs, progress) are defined after the
+   main breakpoint block, so their mobile overrides must come
+   last to win on equal specificity.
+   ============================================================ */
+@media (max-width: 600px) {
+  /* ---- task rows: title on its own line, meta + actions beneath ---- */
+  .task-list li,
+  .pace-list li {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    padding: 11px 2px;
+  }
+
+  .task-list li > label,
+  .pace-list li > .pace-title {
+    flex: 1 1 100%;
+  }
+
+  .task-title,
+  .pace-title {
+    white-space: normal; /* let long titles wrap instead of truncating */
+  }
+
+  .task-milestone,
+  .task-date {
+    max-width: none;
+  }
+
+  /* The multi-day progress slider was unshrinkable and overflowed the row. */
+  .span-progress {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .span-progress input[type="range"] {
+    flex: 1;
+    width: auto;
+  }
+
+  /* ---- comfortable tap targets ---- */
+  .btn-icon {
+    min-height: 34px;
+    padding: 6px 10px;
+  }
+
+  .filter-chip {
+    min-height: 34px;
+  }
+
+  .task-list input[type="checkbox"],
+  .habit-check input,
+  .task-table input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ---- data tables become stacked cards (no 900px side-scroll) ---- */
+  .table-wrap {
+    overflow-x: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .task-table thead {
+    display: none;
+  }
+
+  .task-table,
+  .task-table tbody {
+    display: block;
+  }
+
+  .task-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+
+  .task-table td {
+    display: block;
+    border: none;
+    padding: 0;
+  }
+
+  .task-table td.col-check {
+    order: 1;
+    width: auto;
+  }
+
+  .task-table td.col-task {
+    order: 2;
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 14px;
+    white-space: normal;
+  }
+
+  .task-table td.col-actions {
+    order: 3;
+    width: auto;
+  }
+
+  .task-table td[data-label] {
+    order: 4;
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .task-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    min-width: 68px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+  }
+
+  /* ---- reports: tiles two-up instead of a cramped single row ---- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 18px 14px;
+  }
+
+  .rp-trend {
+    height: 140px;
+  }
+
+  /* ---- forms & toolbars ---- */
+  .add-task-form,
+  .doc-toolbar,
+  .card-head {
+    flex-wrap: wrap;
+  }
+
+  .quickadd-form select,
+  .quickadd-form input:not([type="date"]) {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .subtask-form select,
+  .subtask-form input[type="date"] {
+    flex: 1 1 auto;
+  }
+
+  /* ---- templates: keep the wide register scrollable, not the page ---- */
+  .doc-table-wrap {
+    overflow-x: auto;
+  }
+}

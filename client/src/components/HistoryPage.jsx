@@ -201,8 +201,10 @@ export default function HistoryPage({ data, refresh }) {
                         />
                       </td>
                       <td className="col-task">{task.title}</td>
-                      <td className="col-soft">{milestone?.title || "—"}</td>
-                      <td>
+                      <td className="col-soft" data-label="Milestone">
+                        {milestone?.title || "—"}
+                      </td>
+                      <td data-label="Target">
                         <span className="target-cell">
                           <span
                             className="cal-dot"
@@ -211,8 +213,10 @@ export default function HistoryPage({ data, refresh }) {
                           {target?.title || "—"}
                         </span>
                       </td>
-                      <td className="col-soft">{taskDateLabel(task)}</td>
-                      <td>
+                      <td className="col-soft" data-label="Date">
+                        {taskDateLabel(task)}
+                      </td>
+                      <td data-label="Status">
                         <span className={`chip ${status.cls}`}>{status.text}</span>
                       </td>
                       <td className="col-actions">
