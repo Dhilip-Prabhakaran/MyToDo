@@ -173,7 +173,7 @@ export const TEMPLATES = [
         placeholder:
           "Part A lists everyone — wide and shallow. Part B goes deep only on the people who actually use it.",
         example:
-          "A stakeholder is anyone who cares about the system (affected by it, funds it, constrains it, judges it). A user is the narrower group who actually touches the software. Every user is a stakeholder; not every stakeholder is a user.\n\nPart A lists everyone (wide and shallow); Part B goes deep on only the people who actually use it.",
+          "A **stakeholder** is anyone who cares about the system — affected by it, funds it, constrains it, or judges it. A **user** is the narrower group who actually touches the software. Every user is a stakeholder; not every stakeholder is a user.\n\nPart A lists everyone (wide and shallow); Part B goes deep on only the people who actually use it.",
       },
       {
         key: "stakeholderRegister",
@@ -184,23 +184,24 @@ export const TEMPLATES = [
         prompts: "Aim for 6–9 rows. Influence and the user column are colour-coded so the register is scannable at a glance.",
         placeholder: "e.g. Company founder — fast, correct hires; value for money — High — Rarely",
         example:
-          "Each row: Stakeholder — main interest — Influence — Is a user?\n\n" +
-          "Founder / co-founders — Fast, correct hires; value for money — High — Rarely (views summary reports only)\n" +
-          "Director — Correct hires; reviews recruitment reports — High — Rarely\n" +
-          "Department Head — Approves requisitions raised by Hiring Managers; wants the right skillset for a vacancy — High — Rarely (approval step only)\n" +
-          "HR Manager (Admin) — Configure and oversee the whole flow; publish jobs; assign candidates to recruiters; approve key stages — High — Core user\n" +
-          "Hiring Manager — Raise job requisition (needs Department Head approval); create JD; sit on the interview panel for the round(s) assigned to him; own the hiring decision — High — Core user\n" +
-          "HR Executive / Recruiter — Work the board daily; move candidates; schedule; communicate — Medium — Core user\n" +
-          "Panel Member — Interview and score candidates for a specific round (internal, incl. Hiring Manager, or external expert) — Medium — Limited (scorecard entry page only)\n" +
-          "Candidate — Apply; track progress; (later) self-schedule — Low — Limited (application form)\n" +
-          "Employee Referrer — Refer known candidates; referral bonus — Low — Limited (referral page, later version)\n" +
-          "Accounts / Finance — Salary budget for open roles — Low — Not a user\n" +
-          "Background Verification Team — Verify certificates of hired candidates — Low — Not a user (Recruiter records the outcome)\n" +
-          "3rd-party Assessment Team — Conduct written / mass assessments — Low — Not a user\n\n" +
-          "Resolved contradiction — Background Verification Team: they do not type into Banyan in v1; the Recruiter records their outcome. That keeps them a stakeholder, not a user. (Integrating them directly is a later-version decision.)\n\n" +
-          "Resolved overlap — Hiring Manager vs. Panel Member: a job can have several interview rounds, each with its own panel. The Hiring Manager is ONE specific panel member — assigned to whichever round(s) he's best suited to judge — not a separate interviewing mechanism. Other rounds can carry other internal staff or external experts; same scorecard mechanism for everyone.\n\n" +
-          "Resolved overlap — Department Head vs. Hiring Manager: two different people. The Hiring Manager (Mani) raises the requisition and runs day-to-day hiring for his team; the Department Head sits above him and only touches the system to APPROVE the requisition — a single gate, not ongoing involvement.\n\n" +
-          "Why this matters: the rows marked Core user are the ones that earn a full persona in Part B. Everyone else is satisfied through features and reports, not screens designed for them.",
+          "| Stakeholder | Main interest | Influence | Is a user? |\n" +
+          "|---|---|---|---|\n" +
+          "| Founder / co-founders | Fast, correct hires; value for money | High | Rarely (summary reports only) |\n" +
+          "| Director | Correct hires; reviews recruitment reports | High | Rarely |\n" +
+          "| Department Head | Approves requisitions raised by Hiring Managers; wants the right skillset | High | Rarely (approval step only) |\n" +
+          "| HR Manager (Admin) | Configure & oversee the whole flow; publish jobs; assign to recruiters; approve key stages | High | Core user |\n" +
+          "| Hiring Manager | Raise requisition (needs Dept Head approval); create JD; sit on assigned interview round(s); own the decision | High | Core user |\n" +
+          "| HR Executive / Recruiter | Work the board daily; move candidates; schedule; communicate | Medium | Core user |\n" +
+          "| Panel Member | Interview & score candidates for a specific round (internal, incl. Hiring Manager, or external expert) | Medium | Limited (scorecard only) |\n" +
+          "| Candidate | Apply; track progress; (later) self-schedule | Low | Limited (application form) |\n" +
+          "| Employee Referrer | Refer known candidates; referral bonus | Low | Limited (referral page, later) |\n" +
+          "| Accounts / Finance | Salary budget for open roles | Low | Not a user |\n" +
+          "| Background Verification Team | Verify certificates of hired candidates | Low | Not a user (Recruiter records it) |\n" +
+          "| 3rd-party Assessment Team | Conduct written / mass assessments | Low | Not a user |\n\n" +
+          "**Resolved contradiction — Background Verification Team:** they do not type into Banyan in v1; the Recruiter records their outcome. That keeps them a stakeholder, not a user. (Integrating them directly is a later-version decision.)\n\n" +
+          "**Resolved overlap — Hiring Manager vs. Panel Member:** a job can have several interview rounds, each with its own panel. The Hiring Manager is ONE specific panel member — assigned to whichever round(s) he's best suited to judge — not a separate interviewing mechanism. Other rounds can carry other internal staff or external experts; same scorecard mechanism for everyone.\n\n" +
+          "**Resolved overlap — Department Head vs. Hiring Manager:** two different people. The Hiring Manager (Mani) raises the requisition and runs day-to-day hiring for his team; the Department Head sits above him and only touches the system to **approve the requisition** — a single gate, not ongoing involvement.\n\n" +
+          "**Why this matters:** the rows marked Core user are the ones that earn a full persona in Part B. Everyone else is satisfied through features and reports, not screens designed for them.",
       },
       {
         key: "personas",
@@ -213,35 +214,60 @@ export const TEMPLATES = [
         placeholder:
           "[ Name ] — [ role ]\nSnapshot: age-ish, context, how technical, how often they hire.\nIn the process, they: what they actually do — post? screen? interview? decide?\nGoals: goal 1. goal 2.\nFrustrations today: frustration 1. frustration 2.\nNeeds from the system: need 1 (outcome, not feature). need 2.\nTelling detail: ONE specific human thing — a habit, a fear, a workaround. The highest-value line.\n\nRepeat for each persona (usually 3–4).",
         example:
-          "Arthi — HR Manager (Admin)\n" +
-          "Snapshot: HR Manager at a ~100-employee firm; comfortable with software; owns the hiring system end to end.\n" +
-          "In the process, they: hold all permissions; create job openings from department requirements; design each job's process (stages + scoring) with the department head and leadership; assign whole jobs or individual candidates to recruiters; co-ordinate with hiring managers to create the JD and recruitment stages; use override permission to resolve discrepancies; export reports for the director and founders.\n" +
-          "Goals: a well-defined, consistent process for every job; live visibility of progress.\n" +
-          "Frustrations today: candidates apply through several HRs at once, with no single place to see them all; every job needs a different flow, but rushing it all into one day causes poor selection.\n" +
-          "Needs from the system: a predefined flow (stages + scoring) attached to each job at posting time; progress reports and automation wherever possible.\n" +
-          "Telling detail: she has been burned by two recruiters unknowingly chasing the same candidate, so she instinctively wants to see everything herself — making her the bottleneck she resents being.\n\n" +
-          "Mani — Hiring Manager\n" +
-          "Snapshot: department-side manager who raises requisitions and is accountable for filling his department's roles; not an ATS administrator.\n" +
-          "In the process, they: raise a job requisition to the HR Manager, pending the Department Head's approval; create the JD; get assigned by Admin as the panel member for the interview round(s) he's best placed to judge (one job may have several rounds, with other internal staff or external experts on the rest); own the final hiring decision for his requisitions.\n" +
-          "Goals: a quick, low-friction requisition-and-approval flow; being pulled in only for the round(s) that need him; visibility into how his department's pipeline is progressing.\n" +
-          "Frustrations today: missing out on a strong candidate because he wasn't available on the day his interview round was needed.\n" +
-          "Needs from the system: a simple requisition + JD flow with visible approval status; a clear notice of exactly which round(s) he owns; a fast way to submit his interview decision so it never becomes the bottleneck.\n" +
-          "Telling detail: Mani lives in back-to-back meetings; his real fear is that a strong candidate goes cold while he's away from his desk — so he wants the system to nudge him the moment HIS round or HIS decision is the thing holding a candidate up.\n\n" +
-          "Rachel — Recruiter (HR Executive)\n" +
-          "Snapshot: executes day-to-day recruitment; lives in the board.\n" +
-          "In the process, they: enter scores at each stage; move candidates between stages; manually record outcomes from assessment and background-verification teams; email candidates and panel members; build schedules, create slots, allocate panel members.\n" +
-          "Goals: move candidates stage by stage and complete the process cleanly.\n" +
-          "Frustrations today: tracking every candidate in Excel is hard; each recruiter keeps their own data, so coordination is painful.\n" +
-          "Needs from the system: a smooth interface to move candidates through stages; less dependence on managers via a preset flow; easy scheduling and communication.\n" +
-          "Telling detail: Rachel is often the scapegoat when an unplanned process goes wrong for a candidate or the team — so she wants the process visible and enforced, to share the accountability rather than carry it alone.\n\n" +
-          "Cathy — Candidate\n" +
-          "Snapshot: applies expecting a clear JD, a seamless application, visibility of the major stages, and no unnecessary waiting.\n" +
-          "In the process, they: apply via web portal (or hard copy); fill the form; upload documents; (later version) self-schedule interview slots; move through each stage; accept the offer.\n" +
-          "Goals: a smooth process with zero unnecessary waiting; clear communication and hassle-free scheduling.\n" +
-          "Frustrations today: made to wait for hours because interview planning is poor.\n" +
-          "Needs from the system: an application portal and two-way communication; (later) self-scheduling — especially for candidates travelling a distance.\n" +
-          "Telling detail: Cathy once lost a whole day to a disorganized, uncommunicative process — with no clear schedule she couldn't plan her travel, and she now judges a company's professionalism by how it runs its hiring.\n" +
-          "v1 scope note: in v1 she is a user of ONE screen — the application form (apply + upload). Self-scheduling and online offer acceptance are deferred to a later version (see problem statement §7).",
+          "### Arthi — HR Manager (Admin)\n" +
+          "**Snapshot:** HR Manager at a ~100-employee firm; comfortable with software; owns the hiring system end to end.\n" +
+          "**In the hiring process, they:** hold all permissions; create job openings from department requirements; design each job's process (stages + scoring) with the department head and leadership; assign whole jobs or individual candidates to recruiters; co-ordinate with hiring managers to create the JD and recruitment stages; use override permission to resolve discrepancies; export reports for the director and founders.\n" +
+          "**Goals:**\n" +
+          "- A well-defined, consistent process for every job\n" +
+          "- Live visibility of progress\n" +
+          "**Frustrations today:**\n" +
+          "- Candidates apply through several HRs at once, with no single place to see them all\n" +
+          "- Every job needs a different flow, but rushing it all into one day causes poor selection\n" +
+          "**Needs from the system:**\n" +
+          "- A predefined flow (stages + scoring) attached to each job at posting time\n" +
+          "- Progress reports and automation wherever possible\n" +
+          "**Telling detail:** she has been burned by two recruiters unknowingly chasing the same candidate, so she instinctively wants to see everything herself — making her the bottleneck she resents being.\n\n" +
+          "### Mani — Hiring Manager\n" +
+          "**Snapshot:** department-side manager who raises requisitions and is accountable for filling his department's roles; not an ATS administrator.\n" +
+          "**In the hiring process, they:** raise a job requisition to the HR Manager, pending the Department Head's approval; create the JD; get assigned by Admin as the panel member for the interview round(s) he's best placed to judge (one job may have several rounds, with other internal staff or external experts on the rest); own the final hiring decision for his requisitions.\n" +
+          "**Goals:**\n" +
+          "- A quick, low-friction requisition-and-approval flow\n" +
+          "- Being pulled in only for the round(s) that need him\n" +
+          "- Visibility into how his department's pipeline is progressing\n" +
+          "**Frustrations today:**\n" +
+          "- Missing out on a strong candidate because he wasn't available on the day his interview round was needed\n" +
+          "**Needs from the system:**\n" +
+          "- A simple requisition + JD flow with visible approval status\n" +
+          "- A clear notice of exactly which round(s) he owns\n" +
+          "- A fast way to submit his interview decision so it never becomes the bottleneck\n" +
+          "**Telling detail:** Mani lives in back-to-back meetings; his real fear is that a strong candidate goes cold while he's away from his desk — so he wants the system to nudge him the moment **his** round or **his** decision is the thing holding a candidate up.\n\n" +
+          "### Rachel — Recruiter (HR Executive)\n" +
+          "**Snapshot:** executes day-to-day recruitment; lives in the board.\n" +
+          "**In the hiring process, they:** enter scores at each stage; move candidates between stages; manually record outcomes from assessment and background-verification teams; email candidates and panel members; build schedules, create slots, allocate panel members.\n" +
+          "**Goals:**\n" +
+          "- Move candidates stage by stage\n" +
+          "- Complete the process cleanly\n" +
+          "**Frustrations today:**\n" +
+          "- Tracking every candidate in Excel is hard\n" +
+          "- Each recruiter keeps their own data, so coordination is painful\n" +
+          "**Needs from the system:**\n" +
+          "- A smooth interface to move candidates through stages\n" +
+          "- Less dependence on managers via a preset flow\n" +
+          "- Easy scheduling and communication\n" +
+          "**Telling detail:** Rachel is often the scapegoat when an unplanned process goes wrong for a candidate or the team — so she wants the process visible and enforced, to share the accountability rather than carry it alone.\n\n" +
+          "### Cathy — Candidate\n" +
+          "**Snapshot:** applies expecting a clear JD, a seamless application, visibility of the major stages, and no unnecessary waiting.\n" +
+          "**In the hiring process, they:** apply via web portal (or hard copy); fill the form; upload documents; (later version) self-schedule interview slots; move through each stage; accept the offer.\n" +
+          "**Goals:**\n" +
+          "- A smooth process with zero unnecessary waiting\n" +
+          "- Clear communication and hassle-free scheduling\n" +
+          "**Frustrations today:**\n" +
+          "- Made to wait for hours because interview planning is poor\n" +
+          "**Needs from the system:**\n" +
+          "- An application portal and two-way communication\n" +
+          "- (Later) self-scheduling — especially for candidates travelling a distance\n" +
+          "**Telling detail:** Cathy once lost a whole day to a disorganized, uncommunicative process — with no clear schedule she couldn't plan her travel, and she now judges a company's professionalism by how it runs its hiring.\n" +
+          "**v1 scope note:** in v1 she is a user of ONE screen — the application form (apply + upload). Self-scheduling and online offer acceptance are deferred to a later version (see problem statement §7).",
       },
       {
         key: "implications",
@@ -253,9 +279,9 @@ export const TEMPLATES = [
         placeholder:
           "Primary persona (optimise for first): who, and WHY — think frequency & centrality of use, not who has most permissions.\nA stakeholder who is NOT a user but must be satisfied: who, and how — a report? a guarantee?\nWhat writing this surfaced: one thing a persona needs that you'd have missed otherwise.",
         example:
-          "Primary persona (optimise for first): Admin (Arthi). Admin and Recruiter share the same core board; Admin is a superset with extra config/override screens. Optimise the shared board for the high-frequency daily flow, and keep admin-only controls on separate screens so the board stays fast. (Watch: don't let override controls clutter the daily board.)\n\n" +
-          "A stakeholder who is NOT a user but must be satisfied: the Founder. A mis-hire costs 3–6 months of salary plus training. Satisfy through a transparent report: recruitment funnel, filtering steps, candidate–JD match, and time-to-hire.\n\n" +
-          "What writing this surfaced: the three internal personas map onto three distinct roles with distinct permission sets — Admin, Hiring Manager, Recruiter — not a strict nested hierarchy (Hiring Manager is narrow-scope, not a sub-Admin). In other words, the product needs Role-Based Access Control (RBAC). We discovered a standard design pattern by profiling real people, not by copying a template.",
+          "**Primary persona (optimise for first): Admin (Arthi).** Admin and Recruiter share the same core board; Admin is a superset with extra config/override screens. Optimise the shared board for the high-frequency daily flow, and keep admin-only controls on separate screens so the board stays fast. (Watch: don't let override controls clutter the daily board.)\n\n" +
+          "**A stakeholder who is NOT a user but must be satisfied: the Founder.** A mis-hire costs 3–6 months of salary plus training. Satisfy through a transparent report: recruitment funnel, filtering steps, candidate–JD match, and time-to-hire.\n\n" +
+          "**What writing this surfaced:** the three internal personas map onto three distinct roles with distinct permission sets — Admin, Hiring Manager, Recruiter — not a strict nested hierarchy (Hiring Manager is narrow-scope, not a sub-Admin). In other words, the product needs **Role-Based Access Control (RBAC)**. We discovered a standard design pattern by profiling real people, not by copying a template.",
       },
     ],
   },

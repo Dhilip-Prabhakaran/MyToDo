@@ -1,6 +1,8 @@
+import Markdown from "./Markdown.jsx";
+
 // Read-only view of a learning template: guidance and prompts for each
-// section, with the complete worked example (Banyan ATS) shown as the
-// document body — plain prose per section, easy to paste updated text into.
+// section, with the complete worked example (Banyan ATS) rendered from
+// markdown — paste updated document text (tables, bullets, bold) straight in.
 export default function TemplateViewer({ template, onBack }) {
   return (
     <div className="doc-editor">
@@ -55,7 +57,7 @@ export default function TemplateViewer({ template, onBack }) {
           {s.example ? (
             <>
               <p className="doc-example-label">Example · Banyan ATS</p>
-              <div className="doc-body">{s.example}</div>
+              <Markdown text={s.example} />
             </>
           ) : (
             <p className="hint">{s.placeholder}</p>
