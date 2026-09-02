@@ -31,7 +31,8 @@ export const api = {
   addHabit: (data) => req("POST", "/api/habits", data),
   updateHabit: (id, data) => req("PUT", `/api/habits/${id}`, data),
   deleteHabit: (id) => req("DELETE", `/api/habits/${id}`),
-  logHabit: (id, date, done) => req("PUT", `/api/habits/${id}/log`, { date, done }),
+  // opts: { value } (0–100), { rest: true }, or { done } (legacy true/false).
+  logHabit: (id, date, opts) => req("PUT", `/api/habits/${id}/log`, { date, ...opts }),
 
   restore: (backup) => req("POST", "/api/restore", backup),
 };

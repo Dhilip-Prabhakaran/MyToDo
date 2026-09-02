@@ -197,18 +197,41 @@ app.delete("/api/subtasks/:id", (req, res) => {
 });
 
 // ---------- habits (recurring, no end date — separate from Targets) ----------
+// Each habit carries a point value that feeds a daily score. Two scoring types:
+//   binary — done or not: earns full points or 0.
+//   graded — an intake level (0/25/50/75/100 %) earns that share of the points;
+//            `target` (e.g. "100 g") names what 100 % means.
+// `restAllowance` is how many "rest" days per rolling week still earn full points
+// (for habits you don't do literally every day, e.g. gym).
+const clampInt = (v, lo, hi, dflt) => {
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) ? dflt : Math.min(Math.max(n, lo), hi);
+};
+
+function habitFromBody(body, base = {}) {
+  const out = { ...base };
+  if (body.title !== undefined) out.title = body.title;
+  if (body.color !== undefined) out.color = body.color;
+  if (body.points !== undefined) out.points = clampInt(body.points, 0, 100, base.points ?? 10);
+  if (body.scoreType !== undefined)
+    out.scoreType = body.scoreType === "graded" ? "graded" : "binary";
+  if (body.target !== undefined) out.target = String(body.target).slice(0, 60);
+  if (body.restAllowance !== undefined)
+    out.restAllowance = clampInt(body.restAllowance, 0, 7, base.restAllowance ?? 0);
+  return out;
+}
+
 app.post("/api/habits", (req, res) => {
-  const { title, frequency = "daily", timesPerWeek = 7, color = "#0078D4" } = req.body;
-  if (!title) return res.status(400).json({ error: "title is required" });
-  const habit = {
+  if (!req.body.title) return res.status(400).json({ error: "title is required" });
+  const habit = habitFromBody(req.body, {
     id: id(),
-    title,
-    frequency, // "daily" | "weekly"
-    timesPerWeek:
-      frequency === "weekly" ? Math.min(Math.max(parseInt(timesPerWeek, 10) || 1, 1), 6) : 7,
-    color,
+    color: "#0078D4",
+    points: 10,
+    scoreType: "binary",
+    target: "",
+    restAllowance: 0,
     createdAt: now(),
-  };
+  });
   state.habits.push(habit);
   persist();
   res.status(201).json(habit);
@@ -217,15 +240,7 @@ app.post("/api/habits", (req, res) => {
 app.put("/api/habits/:id", (req, res) => {
   const habit = state.habits.find((h) => h.id === req.params.id);
   if (!habit) return res.status(404).json({ error: "habit not found" });
-  const { title, frequency, timesPerWeek, color } = req.body;
-  Object.assign(habit, {
-    ...(title !== undefined && { title }),
-    ...(frequency !== undefined && { frequency }),
-    ...(timesPerWeek !== undefined && {
-      timesPerWeek: Math.min(Math.max(parseInt(timesPerWeek, 10) || 1, 1), 6),
-    }),
-    ...(color !== undefined && { color }),
-  });
+  Object.assign(habit, habitFromBody(req.body, habit));
   persist();
   res.json(habit);
 });
@@ -237,16 +252,40 @@ app.delete("/api/habits/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// Upsert a habit's completion log for one date — the checkbox on Home ticks this.
+// Upsert a habit's log for one date. Body: { date, value?, rest?, done? }.
+//   rest:true       → a rest day (value 100, rest flag) — earns points within allowance.
+//   value 1..100    → an intake level (or 100 for a plain "done").
+//   value 0 / done:false / neither → clears the day's log.
 app.put("/api/habits/:id/log", (req, res) => {
   const habit = state.habits.find((h) => h.id === req.params.id);
   if (!habit) return res.status(404).json({ error: "habit not found" });
-  const { date, done } = req.body;
+  const { date, value, rest, done } = req.body;
   if (!date) return res.status(400).json({ error: "date is required" });
+
+  let v;
+  let isRest = false;
+  if (rest) {
+    v = 100;
+    isRest = true;
+  } else if (value !== undefined) {
+    v = clampInt(value, 0, 100, 0);
+  } else {
+    v = done ? 100 : 0;
+  }
+
   const existing = state.habitLogs.find((l) => l.habitId === habit.id && l.date === date);
-  if (done) {
-    if (existing) existing.doneAt = now();
-    else state.habitLogs.push({ id: id(), habitId: habit.id, date, done: true, doneAt: now() });
+  if (v > 0) {
+    if (existing) Object.assign(existing, { value: v, rest: isRest, done: true, doneAt: now() });
+    else
+      state.habitLogs.push({
+        id: id(),
+        habitId: habit.id,
+        date,
+        value: v,
+        rest: isRest,
+        done: true,
+        doneAt: now(),
+      });
   } else if (existing) {
     state.habitLogs = state.habitLogs.filter((l) => l.id !== existing.id);
   }

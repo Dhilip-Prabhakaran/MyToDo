@@ -8,8 +8,6 @@ import {
   lastNDays,
   dayOf,
   targetStats,
-  habitStreak,
-  habitLastNDays,
 } from "../insights.js";
 
 const WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -216,60 +214,30 @@ export default function ReportsPage({ data }) {
         </section>
       </div>
 
-      <div className="rp-grid">
-        <section className="card rp-card">
-          <div className="card-head">
-            <h3>Target progress</h3>
-          </div>
-          {data.targets.length === 0 ? (
-            <p className="hint">No targets yet.</p>
-          ) : (
-            <ul className="rp-list">
-              {data.targets.map((t, i) => {
-                const s = targetStats(t, data.milestones, data.subtasks);
-                return (
-                  <li key={t.id}>
-                    <span className="cal-dot" style={{ background: t.color }} />
-                    <span className="rp-list-title">{t.title}</span>
-                    <SweepBar pct={s.completion} color={t.color} delay={i * 0.12} />
-                    <span className="rp-list-num" style={{ color: t.color }}>
-                      {s.completion}%
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="card rp-card">
-          <div className="card-head">
-            <h3>Habit consistency (30d)</h3>
-          </div>
-          {(data.habits || []).length === 0 ? (
-            <p className="hint">No habits yet — add some on the Habits page.</p>
-          ) : (
-            <ul className="rp-list">
-              {data.habits.map((h, i) => {
-                const hits = habitLastNDays(h, data.habitLogs, 30).filter((d) => d.done).length;
-                const expected =
-                  h.frequency === "weekly" ? Math.round((h.timesPerWeek * 30) / 7) : 30;
-                const p = Math.min(Math.round((hits / expected) * 100), 100);
-                return (
-                  <li key={h.id}>
-                    <span className="cal-dot" style={{ background: h.color }} />
-                    <span className="rp-list-title">{h.title}</span>
-                    <SweepBar pct={p} color={h.color} delay={i * 0.12} />
-                    <span className="rp-list-num" style={{ color: h.color }}>
-                      {p}%
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-      </div>
+      <section className="card rp-card">
+        <div className="card-head">
+          <h3>Target progress</h3>
+        </div>
+        {data.targets.length === 0 ? (
+          <p className="hint">No targets yet.</p>
+        ) : (
+          <ul className="rp-list">
+            {data.targets.map((t, i) => {
+              const s = targetStats(t, data.milestones, data.subtasks);
+              return (
+                <li key={t.id}>
+                  <span className="cal-dot" style={{ background: t.color }} />
+                  <span className="rp-list-title">{t.title}</span>
+                  <SweepBar pct={s.completion} color={t.color} delay={i * 0.12} />
+                  <span className="rp-list-num" style={{ color: t.color }}>
+                    {s.completion}%
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

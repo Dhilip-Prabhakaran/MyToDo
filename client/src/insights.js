@@ -199,47 +199,89 @@ export function streak(subtasks) {
   return count;
 }
 
-// ---------- habits (recurring, no end date — tracked separately from Targets) ----------
+// ---------- habits & the daily health score ----------
+// A habit carries `points`; completing it earns them, and a day's health score
+// is the sum earned vs the max if everything were done. Two scoring types:
+//   binary — done or not: full points or 0.
+//   graded — an intake level (0–100 %): that share of the points.
+// A "rest" day earns full points within the habit's weekly restAllowance.
+
+const habitPoints = (h) => h.points ?? 10;
+
+const logOf = (habitLogs, habitId, dateStr) =>
+  habitLogs.find((l) => l.habitId === habitId && l.date === dateStr);
+
+// Intake level recorded for a habit on a day, 0–100. A plain "done" or a rest
+// both read as 100; older logs stored only a `done` flag.
+export function habitValueOn(habitLogs, habitId, dateStr) {
+  const l = logOf(habitLogs, habitId, dateStr);
+  if (!l) return 0;
+  return l.value ?? (l.done ? 100 : 0);
+}
 
 export function isHabitDoneOn(habit, habitLogs, dateStr) {
-  return habitLogs.some((l) => l.habitId === habit.id && l.date === dateStr && l.done);
+  return habitValueOn(habitLogs, habit.id, dateStr) > 0;
 }
 
-// Completions within the rolling 7 days ending today — used for "N/week" habits.
-export function habitWeekProgress(habit, habitLogs) {
-  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
-  const end = todayStr();
-  const start = addDays(end, -6);
-  let hits = 0;
-  for (let d = start; d <= end; d = addDays(d, 1)) if (done.has(d)) hits++;
-  // Daily habits always aim for 7/7 — ignore a stale timesPerWeek left over
-  // from a frequency switch.
-  return { hits, target: habit.frequency === "weekly" ? habit.timesPerWeek : 7 };
+// A rest day earns full points only within the weekly allowance: within the
+// rolling 7 days ending on dateStr, the earliest `restAllowance` rest days are
+// honoured; further rests that week earn nothing.
+export function restHonoredOn(habit, habitLogs, dateStr) {
+  const l = logOf(habitLogs, habit.id, dateStr);
+  if (!l || !l.rest) return false;
+  const allowance = habit.restAllowance ?? 0;
+  if (allowance <= 0) return false;
+  const start = addDays(dateStr, -6);
+  const restDays = habitLogs
+    .filter((x) => x.habitId === habit.id && x.rest && x.date >= start && x.date <= dateStr)
+    .map((x) => x.date)
+    .sort();
+  return restDays.indexOf(dateStr) < allowance;
 }
 
-// Daily habits: consecutive days done, with ONE grace skip allowed — it recharges
-// after 7 done-days since it was last used, so a single off day doesn't erase months
-// of momentum (an all-or-nothing streak is discouraging on a long plan).
-// Weekly habits ("N times a week"): consecutive rolling-7-day windows that hit the
-// target count; the current, still-in-progress window never breaks the streak.
-export function habitStreak(habit, habitLogs) {
-  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
+// Points this habit earned on a given day.
+export function habitPointsOn(habit, habitLogs, dateStr) {
+  const l = logOf(habitLogs, habit.id, dateStr);
+  if (!l) return 0;
+  const pts = habitPoints(habit);
+  if (l.rest) return restHonoredOn(habit, habitLogs, dateStr) ? pts : 0;
+  const value = l.value ?? (l.done ? 100 : 0);
+  return Math.round((pts * value) / 100);
+}
 
-  if (habit.frequency === "weekly") {
-    let count = 0;
-    let weekEnd = todayStr();
-    let isCurrentWindow = true;
-    for (;;) {
-      const weekStart = addDays(weekEnd, -6);
-      let hits = 0;
-      for (let d = weekStart; d <= weekEnd; d = addDays(d, 1)) if (done.has(d)) hits++;
-      if (hits >= habit.timesPerWeek) count++;
-      else if (!isCurrentWindow) break;
-      isCurrentWindow = false;
-      weekEnd = addDays(weekStart, -1);
-    }
-    return count;
+// The whole day's health score: points earned vs the max if everything were done.
+export function dayScore(habits, habitLogs, dateStr) {
+  let earned = 0;
+  let max = 0;
+  for (const h of habits) {
+    max += habitPoints(h);
+    earned += habitPointsOn(h, habitLogs, dateStr);
   }
+  return { earned, max, pct: max ? Math.round((earned / max) * 100) : 0 };
+}
+
+export const todayScore = (habits, habitLogs) => dayScore(habits, habitLogs, todayStr());
+
+// Daily health score over the last n days (oldest first) — feeds a score trend.
+export function lastNDaysScore(habits, habitLogs, n = 14) {
+  const today = todayStr();
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const date = addDays(today, -i);
+    out.push({ date, ...dayScore(habits, habitLogs, date) });
+  }
+  return out;
+}
+
+// Consecutive days the habit was done (any value > 0, incl. rest), with ONE
+// grace skip that recharges after 7 done-days — a single off day doesn't erase
+// months of momentum.
+export function habitStreak(habit, habitLogs) {
+  const done = new Set(
+    habitLogs
+      .filter((l) => l.habitId === habit.id && (l.value ?? (l.done ? 100 : 0)) > 0)
+      .map((l) => l.date)
+  );
 
   let count = 0;
   let date = todayStr();
@@ -265,31 +307,43 @@ export function habitStreak(habit, habitLogs) {
   return count;
 }
 
-// Last n rolling 7-day windows (oldest first) with a hit count vs. that
-// habit's target — feeds the per-habit bar chart on the Habits page.
-export function habitLastNWeeks(habit, habitLogs, n = 8) {
-  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
-  const target = habit.frequency === "weekly" ? habit.timesPerWeek : 7;
-  const weeks = [];
-  let end = todayStr();
-  for (let i = 0; i < n; i++) {
-    const start = addDays(end, -6);
-    let hits = 0;
-    for (let d = start; d <= end; d = addDays(d, 1)) if (done.has(d)) hits++;
-    weeks.unshift({ start, end, hits, target, pct: Math.min(Math.round((hits / target) * 100), 100) });
-    end = addDays(start, -1);
-  }
-  return weeks;
-}
-
-// Completion count over the last n days — feeds the 30-day heatmap strip.
+// Per-day history over the last n days (oldest first) — feeds the month calendar
+// and the 30-day consistency count. `value` is the intake level, `done` any > 0.
 export function habitLastNDays(habit, habitLogs, n = 30) {
-  const done = new Set(habitLogs.filter((l) => l.habitId === habit.id && l.done).map((l) => l.date));
   const today = todayStr();
   const days = [];
   for (let i = n - 1; i >= 0; i--) {
     const date = addDays(today, -i);
-    days.push({ date, done: done.has(date) });
+    const value = habitValueOn(habitLogs, habit.id, date);
+    days.push({ date, done: value > 0, value });
   }
   return days;
+}
+
+// ---------- habit analytics (report page) ----------
+
+// Completion over the last n days: how many days done, the % rate, the average
+// intake level on days it was done, and the day-by-day series (oldest first).
+export function habitStats(habit, habitLogs, n = 30) {
+  const days = habitLastNDays(habit, habitLogs, n);
+  const doneDays = days.filter((d) => d.done);
+  const rate = Math.round((doneDays.length / n) * 100);
+  const avgLevel = doneDays.length
+    ? Math.round(doneDays.reduce((s, d) => s + d.value, 0) / doneDays.length)
+    : 0;
+  return { done: doneDays.length, total: n, rate, avgLevel, days };
+}
+
+// Momentum: completion rate of the recent half of the window vs the earlier
+// half. delta > 0 means improving, < 0 means slipping.
+export function habitTrend(habit, habitLogs, n = 28) {
+  const days = habitLastNDays(habit, habitLogs, n);
+  const mid = Math.floor(n / 2);
+  const older = days.slice(0, n - mid);
+  const recent = days.slice(n - mid);
+  const rateOf = (arr) =>
+    arr.length ? Math.round((arr.filter((d) => d.done).length / arr.length) * 100) : 0;
+  const recentRate = rateOf(recent);
+  const prevRate = rateOf(older);
+  return { recentRate, prevRate, delta: recentRate - prevRate };
 }
